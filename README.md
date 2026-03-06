@@ -25,6 +25,6 @@ env WINEPREFIX=/home/$USER/.kron4ek-wine/wowsoundfix /home/$USER/.kron4ek-wine/w
 Personal note:
 Wine developers, and those in general focused on its betterment, seem to love older windows versions before Vista (for exmple the inbuilt minesweeper, nd general visuals), but I am nostalgic for the windows 7 era aero style, where the inbuilt games got modern enough to not seem "vintage" but before the hellscape that is Microsoft Solitaire Collection.
 Shoutout to the one [useful forum post](https://forum.winehq.org/viewtopic.php?t=37417) that gave me the begginings of solving the ui issues, since Wine cannot handle MUI files.
-Also I am using the images from another (archived) (github guide)[https://web.archive.org/web/20220914142532/https://gist.github.com/eladkarako/0c23ce1157b4c6175817c78a7adb577f], since they are very nicely edited.
+Also I am using the images from another (archived) [github guide](https://web.archive.org/web/20220914142532/https://gist.github.com/eladkarako/0c23ce1157b4c6175817c78a7adb577f), since they are very nicely edited.
 
 ---
