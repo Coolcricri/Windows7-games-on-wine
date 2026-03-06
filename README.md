@@ -1,4 +1,4 @@
-# Windows7-games-on-wine
+# Windows 7 games on Wine
 This is a guide to show how to get classic windows 7 games working through WINE (only tested on linux mint)
 (do screenshots in a VM)
 "wine loves older win versions, even got minesweeper, but I am nostalgic for the windows 7 games, just before enshittification and levels connected to microsoft store. Chess is 64bit, rest are 32bit, since wine 11 both work withut need sepaarte prefixes
