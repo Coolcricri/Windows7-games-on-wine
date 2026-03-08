@@ -26,9 +26,10 @@ Solitaire.exe + Solitaire.exe.mui
 SpiderSolitaire.exe + SpiderSolitaire.exe.mui
 ```
 6. Afterwards, you can delete all files with `_original` in their name, and the folders of the language with the .mui file
+7. If wine did not create the shortcuts properly, it can be done manually by going to `.wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/Programs/Games`, open a command line there, and type `wine winemenubuilder <.lnk name>` for every game you want a shortcut for.
 
 ## Kron4ek Wine
-There is an automatic script that will do it for you, as long as you place the aero installer and the wine-11.2-amd64-wow64.tar.xz in the same folder as them, it wil place shortcuts on your desktop and in `.local/share/applications` through they will have to be moved to a category manually. Modify the `kron4ek-install.sh` if you want to change the parameters.
+There is an automatic script that will set up the `krowine` command in `.local/bin` and set up the desktop shortcuts, and in `.local/share/applications` through they will have to be moved to a category manually, as long as you place the aero installer and the wine-11.2-amd64-wow64.tar.xz in the folder downloaded from the repo. Modify the `kron4ek-install.sh` if you want to change the parameters.
 ### Manual
 1. The Wine executable is located in `/wine-11.2-amd64-wow64/bin/wine`
 2. To have the prefix contained, you can invoke aspecific location from the start thus the full command can look like:
