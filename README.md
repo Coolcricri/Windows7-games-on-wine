@@ -1,31 +1,56 @@
 # Windows 7 games on Wine
-This is a guide to show how to get classic windows 7 games working through WINE (only tested on linux mint, some things may not work as shown)
-(do screenshots in a VM)
+This is a guide to show how to get classic windows 7 games working through WINE 
+(only tested on linux mint, some things may not work as shown)
 
-0. Before installing the app, wine must be installed on your system. You need any version of [wine](https://gitlab.winehq.org/wine/wine/-/wikis/Download) starting with 11.0, as that is when running 32bit application alongside 64bit ones is available. However with the base application sound does not function on all games, excluding Chess Titans. The method I have chosen is downloading [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (11.2 wow64 used), placing in a folder with its own prefix (if used alongside regulare wine, since it wants to change the default prefix settings, breaking some apps), and then running it from there. You can use more user-friendly apps, like bottles and lutris, but either it starts after 5 seconds, or is too fiddly to set up, thus other methods will not be covered here.
-1. Get the [windows 7 games installer](https://win7games.com/#games) from Aero, since it is packaged to be easy to install
-2. Execute instaler with wine, it may take a few seconds for the installer to show up
-- Kronek: wine is located in `/wine-11.2-amd64-wow64/bin/wine`, 
-3. Click on language you want to install, afterwards select whitch games will be installed (by default all offline ones are selected), untick "learn more"'s at the end or you will get sent to a browser page
+## Prerequisites
+Before installing the games, You need any version of [wine](https://gitlab.winehq.org/wine/wine/-/wikis/Download) installed on your system, starting with 11.0, as that is when running 32bit application alongside 64bit ones is available. However with the base application sound does not function on all games, excluding Chess Titans.
+The method I have chosen to get sound working is downloading [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (11.2 wow64 used), placing in a folder with its own prefix (if it is used alongside regular wine it might break some apps already installed, as it wants to change the default prefix settings), and then running it from there. You can use more user-friendly apps, like bottles and lutris, but either it starts after 5 seconds, or is too fiddly to set up, thus other methods will not be covered here.
+Apart from wine, the [windows 7 games installer](https://win7games.com/#games) from Aero will be used, since it is packaged to be easy to install.
+The tool used to fix the executables used in this guide is [resource hacker](https://www.angusj.com/resourcehacker).
 
-4. SInce MUI files are not supported by Wine, all games will not load the UI correctly, and some may just not open. To solve this, editing the games' files in your `drive_c/Program Files/Microsoft Games` by using [resource hacker](https://www.angusj.com/resourcehacker)
-- Alternively, if you, trust a stranger on the internet (I am not random, you clicked on this guide), you can download the modified files under `fixedwingames`. Download the whole folder and take the files in them to their respective loactions in your install with the same names. You can delete the folder (named after the language you chose) in each game folder so save precious kilobytes
-5. After installing resource hacker through Wine, open it, find chess.exe and the folder next to it, click on import thing, merge, [remember settings] done, delete old exe and mui, do the same for all mui files with matching .exe's or .dll's. Full list of files to merege is:
-
-6. All Done! if importing old saves, they located in `drive_c/users/$USER/AppData/Local/Microsoft Games`, otherwise sound may not work in all but chess
- [check if icons are in system with only kron4ek installed]
+## Plain Wine
+If Wine 11.0 or later is already installed on your system, and are not bothered with a possible lack of sound, then the next steps are fairly easy:
+1. Execute the games installer with wine, select the language you prefer, it may take a bit for the installer to go to the next option.
+3. Click on the language you want to install, afterwards select whitch games will be installed (by default all offline games are selected), untick "learn more"'s at the end or you will get sent to a browser page
+4. SInce MUI files are not supported by Wine, all games will not load the UI correctly, and some may just not open. To solve this, you will need the games' files in your `drive_c/Program Files/Microsoft Games` by using resource hacker.
+- Alternively, if you, trust a stranger on the internet (I am not random, you clicked on this guide), you can download the modified files under `enUS-exes`.
+5. After installing resource hacker through Wine, open it, find chess.exe and the folder next to it, click on import thing, merge, [remember settings] done, delete old exe and mui, do the same for all mui files with matching .exe's, there is at least one in every game folder. Full list of files to merge is:
+  
+```
+chess.exe + chess.exe.mui
+FreeCell.exe + FreeCell.exe.mui
+Hearts.exe + Hearts.exe.mui
+Mahjong.exe + Mahjong.exe.mui
+Minesweeper.exe + Minesweeper.exe.mui
+PurblePlace.exe + PurblePlace.exe.mui
+Solitaire.exe + Solitaire.exe.mui
+SpiderSolitaire.exe + SpiderSolitaire.exe.mui
+```
+## Kron4ek Wine
+There is an automatic script that will do it for you, as long as you place the aero installer and the wine-11.2-amd64-wow64.tar.xz in the same folder as them, it wil place shortcuts on your desktop and in `.local/share/applications` through they will have to be moved to a category manually. Modify the `kron4ek-install.sh` if you want to change the parameters.
+### Manual
+1. The Wine executable is located in `/wine-11.2-amd64-wow64/bin/wine`
+2. To have the prefix contained, you can invoke aspecific location from the start thus the full command can look like:
+```bash
+#!/bin/bash
+env WINEPREFIX=/home/$USER/.kron4ek-wine/wowsoundfix /home/$USER/.kron4ek-wine/wine-11.2-amd64-wow64/bin/wine <exeutable>
+```
+3. all of this can be placed in a single shell file and used as a fucntion by adding `"$@"` at the end to pass the arguments to the command, as with the `krowine` file in this repository.
+4. All Done! if importing old saves, they located in `drive_c/users/$USER/AppData/Local/Microsoft Games`, otherwise sound may not work in all but chess
 - Not all done for Kronek! To have an easier time with calling this specific wine from its folder, you can place a shell file in `.local/bin`
   Personally, I placed:
 
-```bash
-#!/bin/bash
-env WINEPREFIX=/home/$USER/.kron4ek-wine/wowsoundfix /home/$USER/.kron4ek-wine/wine-11.2-amd64-wow64/bin/wine "$@"
-```
 
+
+## Screenshots
+
+
+
+
+
+---
 
 Personal note:
 Wine developers, and those in general focused on its betterment, seem to love older windows versions before Vista (for exmple the inbuilt minesweeper, nd general visuals), but I am nostalgic for the windows 7 era aero style, where the inbuilt games got modern enough to not seem "vintage" but before the hellscape that is Microsoft Solitaire Collection.
 Shoutout to the one [useful forum post](https://forum.winehq.org/viewtopic.php?t=37417) that gave me the begginings of solving the ui issues, since Wine cannot handle MUI files.
 Also I am using the images from another (archived) [github guide](https://web.archive.org/web/20220914142532/https://gist.github.com/eladkarako/0c23ce1157b4c6175817c78a7adb577f), since they are very nicely edited.
-
----
