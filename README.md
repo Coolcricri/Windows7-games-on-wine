@@ -12,10 +12,9 @@ The tool used to fix the executables used in this guide is [resource hacker](htt
 If Wine 11.0 or later is already installed on your system, and are not bothered with a possible lack of sound, then the next steps are fairly easy:
 1. Execute the games installer with wine, select the language you prefer, it may take a bit for the installer to go to the next option.
 3. Click on the language you want to install, afterwards select whitch games will be installed (by default all offline games are selected), untick "learn more"'s at the end or you will get sent to a browser page
-4. SInce MUI files are not supported by Wine, all games will not load the UI correctly, and some may just not open. To solve this, you will need the games' files in your `drive_c/Program Files/Microsoft Games` by using resource hacker.
-- Alternively, if you, trust a stranger on the internet (I am not random, you clicked on this guide), you can download the modified files under `enUS-exes`.
-5. After installing resource hacker through Wine, open it, find chess.exe and the folder next to it, click on import thing, merge, [remember settings] done, delete old exe and mui, do the same for all mui files with matching .exe's, there is at least one in every game folder. Full list of files to merge is:
-  
+4. SInce [MUI files are not supported by Wine](https://forum.winehq.org/viewtopic.php?t=37417), all games will not load the UI correctly, and some may just not open. To solve this, you will need the games' files in your `drive_c/Program Files/Microsoft Games` by using resource hacker.
+- Alternatively, if you, trust a stranger on the internet, you can download the modified files under `enUS-exes`.
+5. After installing resource hacker through Wine, in the app file => open, find `chess.exe` under `My computer -> C: -> Program Files/Microsoft Games` open it, click on Action => Add from resource file, slect to display all files, enter the flder next to the executables, select the .MUI file, tick [overwrite], tick [check all], import, file => save, repeat for all main .exe files n every game folder with matching .MUI's, you can also use the folder and floffy disk icons, or ctrl+o and ctrl+s for a faster experience. Full list of files to merge is:
 ```
 chess.exe + chess.exe.mui
 FreeCell.exe + FreeCell.exe.mui
@@ -26,6 +25,8 @@ PurblePlace.exe + PurblePlace.exe.mui
 Solitaire.exe + Solitaire.exe.mui
 SpiderSolitaire.exe + SpiderSolitaire.exe.mui
 ```
+6. Afterwards, you can delete all files with `_original` in their name, and the folders of the language with the .mui file
+
 ## Kron4ek Wine
 There is an automatic script that will do it for you, as long as you place the aero installer and the wine-11.2-amd64-wow64.tar.xz in the same folder as them, it wil place shortcuts on your desktop and in `.local/share/applications` through they will have to be moved to a category manually. Modify the `kron4ek-install.sh` if you want to change the parameters.
 ### Manual
