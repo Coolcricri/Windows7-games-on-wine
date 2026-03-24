@@ -28,19 +28,26 @@ SpiderSolitaire.exe + SpiderSolitaire.exe.mui
 6. Afterwards, you can delete all files with `_original` in their name, and the folders of the language with the .mui file
 7. If wine did not create the shortcuts properly, it can be done manually by going to `.wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/Programs/Games`, open a command line there, and type `wine winemenubuilder <.lnk name>` for every game you want a shortcut for.
 
-## Kron4ek Wine
-There is an automatic script that will set up the `krowine` command in `.local/bin` and set up the desktop shortcuts, and in `.local/share/applications` through they will have to be moved to a category manually, as long as you place the aero installer and the wine-11.2-amd64-wow64.tar.xz in the folder downloaded from the repo. Modify the `kron4ek-install.sh` if you want to change the parameters.
-### Manual
-1. The Wine executable is located in `/wine-11.2-amd64-wow64/bin/wine`
+# Kron4ek Wine
+## Semi-automatic installer
+There is an automatic script that will place all files in `.kron4ek-wine`, set up the `krowine` command in `.local/bin` and set up the desktop shortcuts, and in `.local/share/applications` through they will have to be moved to a category manually, as long as you place the aero installer and the wine-11.2-amd64-wow64.tar.xz in the folder downloaded from the repo. Modify the `autoinstaller.sh` if you want to change the parameters.
+### installer notes
+If downloaded wine file is not `.tar.xz`, change in script
+Untick see more at end of script
+untick readme and run rH
+
+
+
+## Manual
+1. The Wine executable is located in `/wine-<your version>/bin/wine`
 2. To have the prefix contained, you can invoke aspecific location from the start thus the full command can look like:
 ```bash
 #!/bin/bash
 env WINEPREFIX=/home/$USER/.kron4ek-wine/wowsoundfix /home/$USER/.kron4ek-wine/wine-11.2-amd64-wow64/bin/wine <exeutable>
 ```
 3. all of this can be placed in a single shell file and used as a fucntion by adding `"$@"` at the end to pass the arguments to the command, as with the `krowine` file in this repository.
-4. All Done! if importing old saves, they located in `drive_c/users/$USER/AppData/Local/Microsoft Games`, otherwise sound may not work in all but chess
+4. All Done! if importing old saves, they located in `drive_c/users/<username>/AppData/Local/Microsoft Games`, otherwise sound may not work in all but chess
 - Not all done for Kronek! To have an easier time with calling this specific wine from its folder, you can place a shell file in `.local/bin`
-  Personally, I placed:
 
 
 
