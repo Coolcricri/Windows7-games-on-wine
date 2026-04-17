@@ -24,7 +24,7 @@ The tool used to fix the executables used in this guide is [resource hacker](htt
    <img width="433" height="88" alt="rh2" src="https://github.com/user-attachments/assets/48fbacf3-abeb-465a-ab48-07fecc3a7a64" />
 8. Tick [overwrite], tick [check all], import, file => save
    <img width="230" height="332" alt="rh3" src="https://github.com/user-attachments/assets/ab139f92-d689-4780-b390-4fd0724d4e31" />
-10. Repeat for all main .exe files n every game folder with matching .MUI's, you can also use the folder and floppy disk icons, or ctrl+o and ctrl+s for a faster experience. Full list of files to merge is:
+9. Repeat for all main .exe files n every game folder with matching .MUI's, you can also use the folder and floppy disk icons, or ctrl+o and ctrl+s for a faster experience. Full list of files to merge is:
 ```
 chess.exe + chess.exe.mui
 FreeCell.exe + FreeCell.exe.mui
@@ -35,10 +35,11 @@ PurblePlace.exe + PurblePlace.exe.mui
 Solitaire.exe + Solitaire.exe.mui
 SpiderSolitaire.exe + SpiderSolitaire.exe.mui
 ```
-6. Afterwards, you can delete all files with `_original` in their name, and the folders of the language with the .mui file
+10. Afterwards, you can delete all files with `_original` in their name, and the folders of the language with the .mui file
    <img width="446" height="214" alt="rh4" src="https://github.com/user-attachments/assets/8765f4b5-4a91-4b6b-9ce1-6f8971ab8048" />
-8. If wine did not create the shortcuts properly, it can be done manually by going to `.wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/Programs/Games`, open a command line there, and type `wine winemenubuilder <.lnk name>` for every game you want a shortcut for.
-9. If that also fails, I included a folder with shortcut templates in the repository, take the icon folder too, and then modify the shortcuts to point to them
+Note: if wine did not create the shortcuts properly, it can be done manually by going to `.wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/Programs/Games`, open a command line there, and type `wine winemenubuilder <.lnk name>` for every game you want a shortcut for.
+
+Icons folder included in repository to make desktop shortcuts.
 
 
 ---
