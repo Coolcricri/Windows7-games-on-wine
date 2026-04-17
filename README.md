@@ -1,20 +1,30 @@
 # Windows 7 games on Wine
-This is a guide to show how to get classic windows 7 games working through WINE 
-(only tested on linux mint, some things may not work as shown)
+This is a guide to show how to get classic windows 7 games working through WINE.
+
+The modified games should be functiona on any x86 system from wine 11.0, but sound may be broken (verified it works on Bazzite if installed with rpm-ostree)
 
 ## Prerequisites
-Before installing the games, You need any version of [wine](https://gitlab.winehq.org/wine/wine/-/wikis/Download) installed on your system, starting with 11.0, as that is when running 32bit application alongside 64bit ones is available. However with the base application sound does not function on all games, excluding Chess Titans.
-The method I have chosen to get sound working is downloading [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (11.2 wow64 used), placing in a folder with its own prefix (if it is used alongside regular wine it might break some apps already installed, as it wants to change the default prefix settings), and then running it from there. You can use more user-friendly apps, like bottles and lutris, but either it starts after 5 seconds, or is too fiddly to set up, thus other methods will not be covered here.
-Apart from wine, the [windows 7 games installer](https://win7games.com/#games) from Aero will be used, since it is packaged to be easy to install.
+[Wine](https://gitlab.winehq.org/wine/wine/-/wikis/Download) installed on your system, starting with 11.0, as that is when running 32bit application alongside 64bit ones is available.
+
+An alternative to not install wine in the sytem is using the pre-compiled [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (wine-xx.x-amd64-wow64.tar.xz), placing in a folder with its own prefix (if it is used alongside regular wine it might break some apps already installed, as it wants to change the default prefix settings), and then running it from there.
+
+For the games themselves, the [windows 7 games installer](https://win7games.com/#games) from Aero will be used, since it is packaged to be easy to install.
+
 The tool used to fix the executables used in this guide is [resource hacker](https://www.angusj.com/resourcehacker).
 
-## Plain Wine
-If Wine 11.0 or later is already installed on your system, and are not bothered with a possible lack of sound, then the next steps are fairly easy:
+## Instruction
 1. Execute the games installer with wine, select the language you prefer, it may take a bit for the installer to go to the next option.
 3. Click on the language you want to install, afterwards select whitch games will be installed (by default all offline games are selected), untick "learn more"'s at the end or you will get sent to a browser page
-4. SInce [MUI files are not supported by Wine](https://forum.winehq.org/viewtopic.php?t=37417), all games will not load the UI correctly, and some may just not open. To solve this, you will need the games' files in your `drive_c/Program Files/Microsoft Games` by using resource hacker.
-- Alternatively, if you, trust a stranger on the internet, you can download the modified files under `enUS-exes`.
-5. After installing resource hacker through Wine, in the app file => open, find `chess.exe` under `My computer -> C: -> Program Files/Microsoft Games` open it, click on Action => Add from resource file, slect to display all files, enter the flder next to the executables, select the .MUI file, tick [overwrite], tick [check all], import, file => save, repeat for all main .exe files n every game folder with matching .MUI's, you can also use the folder and floffy disk icons, or ctrl+o and ctrl+s for a faster experience. Full list of files to merge is:
+4. SInce [MUI files are not supported by Wine](https://forum.winehq.org/viewtopic.php?t=37417), all games will not load the UI correctly, and some may just not open. To solve this, you will need to fix the games' files in your `~/.wine/drive_c/Program Files/Microsoft Games` by using resource hacker.
+- I tried contacting @AngusJohnson to ask how to set up a script to automate this, since I could not figure it out from the instructions on the website, but recieved no reply
+5. After installing resource hacker through Wine, in the app file => open, find `chess.exe` under `My computer -> C: -> Program Files/Microsoft Games`
+6. Open it, click on Action => Add from resource file
+   <img width="385" height="320" alt="rh1" src="https://github.com/user-attachments/assets/71013a9a-050c-4f5f-8852-6807ae88f0d7" />
+7. Select to display all files, enter the folder next to the executables, select the .MUI file
+   <img width="433" height="88" alt="rh2" src="https://github.com/user-attachments/assets/48fbacf3-abeb-465a-ab48-07fecc3a7a64" />
+8. Tick [overwrite], tick [check all], import, file => save
+   <img width="230" height="332" alt="rh3" src="https://github.com/user-attachments/assets/ab139f92-d689-4780-b390-4fd0724d4e31" />
+10. Repeat for all main .exe files n every game folder with matching .MUI's, you can also use the folder and floppy disk icons, or ctrl+o and ctrl+s for a faster experience. Full list of files to merge is:
 ```
 chess.exe + chess.exe.mui
 FreeCell.exe + FreeCell.exe.mui
@@ -26,40 +36,16 @@ Solitaire.exe + Solitaire.exe.mui
 SpiderSolitaire.exe + SpiderSolitaire.exe.mui
 ```
 6. Afterwards, you can delete all files with `_original` in their name, and the folders of the language with the .mui file
-7. If wine did not create the shortcuts properly, it can be done manually by going to `.wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/Programs/Games`, open a command line there, and type `wine winemenubuilder <.lnk name>` for every game you want a shortcut for.
-
-# Kron4ek Wine
-## Semi-automatic installer
-There is an automatic script that will place all files in `.kron4ek-wine`, set up the `krowine` command in `.local/bin` and set up the desktop shortcuts, and in `.local/share/applications` through they will have to be moved to a category manually, as long as you place the aero installer and the wine-11.2-amd64-wow64.tar.xz in the folder downloaded from the repo. Modify the `autoinstaller.sh` if you want to change the parameters.
-### installer notes
-If downloaded wine file is not `.tar.xz`, change in script
-Untick see more at end of script
-untick readme and run rH
-
-
-
-## Manual
-1. The Wine executable is located in `/wine-<your version>/bin/wine`
-2. To have the prefix contained, you can invoke aspecific location from the start thus the full command can look like:
-```bash
-#!/bin/bash
-env WINEPREFIX=/home/$USER/.kron4ek-wine/wowsoundfix /home/$USER/.kron4ek-wine/wine-11.2-amd64-wow64/bin/wine <exeutable>
-```
-3. all of this can be placed in a single shell file and used as a fucntion by adding `"$@"` at the end to pass the arguments to the command, as with the `krowine` file in this repository.
-4. All Done! if importing old saves, they located in `drive_c/users/<username>/AppData/Local/Microsoft Games`, otherwise sound may not work in all but chess
-- Not all done for Kronek! To have an easier time with calling this specific wine from its folder, you can place a shell file in `.local/bin`
-
-
-
-## Screenshots
-
-
-
+   <img width="446" height="214" alt="rh4" src="https://github.com/user-attachments/assets/8765f4b5-4a91-4b6b-9ce1-6f8971ab8048" />
+8. If wine did not create the shortcuts properly, it can be done manually by going to `.wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/Programs/Games`, open a command line there, and type `wine winemenubuilder <.lnk name>` for every game you want a shortcut for.
+9. If that also fails, I included a folder with shortcut templates in the repository, take the icon folder too, and then modify the shortcuts to point to them
 
 
 ---
 
 Personal note:
 Wine developers, and those in general focused on its betterment, seem to love older windows versions before Vista (for exmple the inbuilt minesweeper, nd general visuals), but I am nostalgic for the windows 7 era aero style, where the inbuilt games got modern enough to not seem "vintage" but before the hellscape that is Microsoft Solitaire Collection.
+
 Shoutout to the one [useful forum post](https://forum.winehq.org/viewtopic.php?t=37417) that gave me the begginings of solving the ui issues, since Wine cannot handle MUI files.
-Also I am using the images from another (archived) [github guide](https://web.archive.org/web/20220914142532/https://gist.github.com/eladkarako/0c23ce1157b4c6175817c78a7adb577f), since they are very nicely edited.
+
+I am using the images from another (archived) [github guide](https://web.archive.org/web/20220914142532/https://gist.github.com/eladkarako/0c23ce1157b4c6175817c78a7adb577f), since they are very nicely edited.
