@@ -1,0 +1,63 @@
+[FILENAMES]
+Open= "chess.exe"
+SaveAs= "chess.exe"
+Log= "Chess_log.log"
+[COMMANDS]
+-addoverwrite "chess.exe.mui", DATA,__GDF_XML,1033
+-addoverwrite "chess.exe.mui", MENU,129,1033
+-addoverwrite "chess.exe.mui", MENU,189,1033
+-addoverwrite "chess.exe.mui", DIALOG,9,1033
+-addoverwrite "chess.exe.mui", DIALOG,160,1033
+-addoverwrite "chess.exe.mui", DIALOG,164,1033
+-addoverwrite "chess.exe.mui", DIALOG,167,1033
+-addoverwrite "chess.exe.mui", DIALOG,187,1033
+-addoverwrite "chess.exe.mui", DIALOG,188,1033
+-addoverwrite "chess.exe.mui", DIALOG,190,1033
+-addoverwrite "chess.exe.mui", DIALOG,191,1033
+-addoverwrite "chess.exe.mui", DIALOG,233,1033
+-addoverwrite "chess.exe.mui", DIALOG,234,1033
+-addoverwrite "chess.exe.mui", DIALOG,237,1033
+-addoverwrite "chess.exe.mui", DIALOG,239,1033
+-addoverwrite "chess.exe.mui", DIALOG,241,1033
+-addoverwrite "chess.exe.mui", DIALOG,243,1033
+-addoverwrite "chess.exe.mui", DIALOG,245,1033
+-addoverwrite "chess.exe.mui", DIALOG,246,1033
+-addoverwrite "chess.exe.mui", DIALOG,247,1033
+-addoverwrite "chess.exe.mui", DIALOG,248,1033
+-addoverwrite "chess.exe.mui", DIALOG,303,1033
+-addoverwrite "chess.exe.mui", DIALOG,304,1033
+-addoverwrite "chess.exe.mui", DIALOG,305,1033
+-addoverwrite "chess.exe.mui", DIALOG,309,1033
+-addoverwrite "chess.exe.mui", DIALOG,500,1033
+-addoverwrite "chess.exe.mui", DIALOG,501,1033
+-addoverwrite "chess.exe.mui", DIALOG,502,1033
+-addoverwrite "chess.exe.mui", DIALOG,503,1033
+-addoverwrite "chess.exe.mui", DIALOG,504,1033
+-addoverwrite "chess.exe.mui", DIALOG,505,1033
+-addoverwrite "chess.exe.mui", DIALOG,506,1033
+-addoverwrite "chess.exe.mui", DIALOG,507,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,7,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,8,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,9,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,10,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,11,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,12,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,13,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,14,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,15,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,16,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,19,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,20,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,66,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,69,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,70,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,376,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,377,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,476,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,3884,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,3885,1033
+-addoverwrite "chess.exe.mui", STRINGTABLE,3886,1033
+-addoverwrite "chess.exe.mui", ACCELERATORS,173,1033
+-addoverwrite "chess.exe.mui", ACCELERATORS,174,1033
+-addoverwrite "chess.exe.mui", VERSIONINFO,1,1033
+
