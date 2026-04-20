@@ -1,0 +1,63 @@
+[FILENAMES]
+Open= "C:\Program Files\Microsoft Games\Chess\chess.exe"
+SaveAs= "C:\Program Files\Microsoft Games\Chess\chess.exe"
+Log= "logs\chess-log.log"
+[COMMANDS]
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DATA,__GDF_XML,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", MENU,129,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", MENU,189,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,9,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,160,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,164,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,167,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,187,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,188,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,190,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,191,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,233,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,234,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,237,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,239,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,241,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,243,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,245,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,246,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,247,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,248,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,303,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,304,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,305,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,309,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,500,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,501,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,502,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,503,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,504,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,505,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,506,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", DIALOG,507,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,7,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,8,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,9,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,10,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,11,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,12,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,13,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,14,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,15,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,16,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,19,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,20,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,66,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,69,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,70,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,376,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,377,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,476,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,3884,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,3885,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", STRINGTABLE,3886,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", ACCELERATORS,173,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", ACCELERATORS,174,1033
+-addoverwrite "C:\Program Files\Microsoft Games\Chess\chess.res", VERSIONINFO,1,1033
+
