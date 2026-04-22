@@ -1,19 +1,46 @@
 #!/bin/bash
+SCRIPT_START=$(date +%s)
+#+ if not running in a command line, create a log file where normal echo output is routed, choose silent mode, detected language unless .txt file is found (see line 107 first), and delete all useless files
 
+# If not running in an interactive terminal, log all output and auto-select all choices
+NON_INTERACTIVE=0
+if [[ ! -t 1 ]]; then
+    NON_INTERACTIVE=1
+    LOG_FILE="$(dirname "$0")/install_$(date +%Y%m%d_%H%M%S).log"
+    exec > "$LOG_FILE" 2>&1
+    echo "Running in non-interactive mode. Log: $LOG_FILE"
+fi
 # Cheking if requirenemts are met
 MISSING=0
 if ! command wine --version &>/dev/null; then
     echo "WARNING: wine is not installed as a system package." >&2
     MISSING=1
+else
+    WINE_VERSION=$(wine --version | grep -oP '[\d]+\.[\d]+' | head -n1)
+    WINE_MAJOR=$(echo "$WINE_VERSION" | cut -d. -f1)
+    WINE_MINOR=$(echo "$WINE_VERSION" | cut -d. -f2)
+    if [[ "$WINE_MAJOR" -lt 11 ]] || { [[ "$WINE_MAJOR" -eq 11 ]] && [[ "$WINE_MINOR" -lt 0 ]]; }; then
+        echo "WARNING: Wine $WINE_VERSION detected (minimum recommended: 11.0)." >&2
+        echo "         Only Chess Titans is likely to be functional on this version." >&2
+        echo "         All games will run slower due to lack of NTSYNC support." >&2
+    fi
 fi
 
-if [[ ! -f "$HOME/Downloads/Windows7Games_for_Windows_11_10_8.exe" ]]; then
-    echo "WARNING: Windows7Games_for_Windows_11_10_8.exe not found in Downloads." >&2
+GAMES_INSTALLER=""
+for loc in "$HOME/Downloads/Windows7Games_for_Windows_11_10_8.exe" "$(dirname "$0")/Windows7Games_for_Windows_11_10_8.exe"; do
+    [[ -f "$loc" ]] && GAMES_INSTALLER="$loc" && break
+done
+if [[ -z "$GAMES_INSTALLER" ]]; then
+    echo "WARNING: Windows7Games_for_Windows_11_10_8.exe not found in Downloads or next to the script." >&2
     MISSING=1
 fi
 
-if [[ ! -f "$HOME/Downloads/reshacker_setup.exe" ]]; then
-    echo "WARNING: reshacker_setup.exe not found in Downloads." >&2
+RESHACKER_INSTALLER=""
+for loc in "$HOME/Downloads/reshacker_setup.exe" "$(dirname "$0")/reshacker_setup.exe"; do
+    [[ -f "$loc" ]] && RESHACKER_INSTALLER="$loc" && break
+done
+if [[ -z "$RESHACKER_INSTALLER" ]]; then
+    echo "WARNING: reshacker_setup.exe not found in Downloads or next to the script." >&2
     MISSING=1
 fi
 SCRIPT_DIR="$(dirname "$0")/reshacker_scripts"
@@ -26,23 +53,28 @@ if [[ "$MISSING" -eq 1 ]]; then
     exit 1
 fi
 
-#Running installers silentrly or not
+#Running installers silently or not
 GAMES_DIR="$HOME/.wine/drive_c/Program Files/Microsoft Games"
-echo "Install games silently? All 8 offline games will be installed automatically."
-read -rp "Silent install? [y/N] " SILENT_CHOICE
+if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
+    SILENT_CHOICE="y"
+else
+    echo "Install games silently? All 8 offline games will be installed automatically."
+    read -rp "Silent install? [y/N] " SILENT_CHOICE
+fi
+
 if [[ "$SILENT_CHOICE" =~ ^[Yy]$ ]]; then
-    echo "Silent mode enabled."
-    WINEDEBUG=-all wine "$HOME/Downloads/Windows7Games_for_Windows_11_10_8.exe" /S
+    echo "Silent mode enabled. 8 offline games and Resource hacker will be installed"
+    WINEDEBUG=-all wine "$GAMES_INSTALLER" /S
     wait
-    WINEDEBUG=-all wine "$HOME/Downloads/reshacker_setup.exe" /SILENT
+    WINEDEBUG=-all wine "$RESHACKER_INSTALLER" /SILENT
     wait
 else
     echo "Interactive mode:"
     echo "starting games installer, untick the [learn more] textboxes before finishing"
-    WINEDEBUG=-all wine "$HOME/Downloads/Windows7Games_for_Windows_11_10_8.exe"
+    WINEDEBUG=-all wine "$GAMES_INSTALLER"
     wait
     echo "installing patcher... untick the boxes before [Finish]ing for a smooth experience"
-    WINEDEBUG=-all wine "$HOME/Downloads/reshacker_setup.exe"
+    WINEDEBUG=-all wine "$RESHACKER_INSTALLER"
     wait
 fi
 echo ""
@@ -86,19 +118,96 @@ RE_HACKER="${RE_HACKER//\\//}"
 #Default language for scripts
 DETECTED_LCID=1033
 DETECTED_LANG="en-US"
+LANG_FORCED=0
+# Check for lang.txt override next to the script
+LANG_TXT="$(dirname "$0")/lang.txt"
+if [[ -f "$LANG_TXT" ]]; then
+    LANG_TXT_VALUE=$(head -n1 "$LANG_TXT" | tr -d '[:space:]')
+    for LANG_CODE in "${!LCID[@]}"; do
+        if [[ "${LANG_TXT_VALUE,,}" == "${LANG_CODE,,}" ]]; then
+            DETECTED_LANG="$LANG_CODE"
+            DETECTED_LCID="${LCID[$LANG_CODE]}"
+            LANG_FORCED=1
+            echo "Language overridden by lang.txt: $DETECTED_LANG (LCID: $DETECTED_LCID)"
+            break
+        fi
+    done
+    if [[ "$LANG_FORCED" -eq 0 ]]; then
+        echo "WARNING: lang.txt found but '${LANG_TXT_VALUE}' is not a recognised language code, ignoring." >&2
+    fi
+fi
 
 #Language code detected by folder name of the .mui files
-for LANG_CODE in "${!LCID[@]}"; do
-    if find "$GAMES_DIR" -maxdepth 2 -type d -name "$LANG_CODE" -print -quit | grep -q .; then
-        DETECTED_LCID="${LCID[$LANG_CODE]}"
-        DETECTED_LANG="$LANG_CODE"
-        break
-    fi
-done
+if [[ "$LANG_FORCED" -eq 0 ]]; then
+    for LANG_CODE in "${!LCID[@]}"; do
+        if find "$GAMES_DIR" -maxdepth 2 -type d -name "$LANG_CODE" -print -quit | grep -q .; then
+            DETECTED_LCID="${LCID[$LANG_CODE]}"
+            DETECTED_LANG="$LANG_CODE"
+            break
+        fi
+    done
+fi
+
 
 #Modifies scripts if language is not english-US
 if [[ "$DETECTED_LCID" -ne 1033 ]]; then
-    echo "Detected locale LCID: $DETECTED_LCID — patching reshacker scripts..."
+
+    if [[ "$LANG_FORCED" -eq 1 || "$NON_INTERACTIVE" -eq 1 ]]; then
+        echo "Using language: $DETECTED_LANG (LCID: $DETECTED_LCID)"
+    else
+        # Ask if the detected language is the one the user wants
+        echo "Detected installed language: $DETECTED_LANG (LCID: $DETECTED_LCID)"
+        read -rp "Use this language for patching? [Y/n] " LANG_CONFIRM
+        if [[ "$LANG_CONFIRM" =~ ^[Nn]$ ]]; then
+            echo "Available languages:"
+            IFS=$'\n' SORTED_LANGS=($(printf '%s\n' "${!LCID[@]}" | sort)); unset IFS
+            select CHOSEN_LANG in "${SORTED_LANGS[@]}"; do
+                if [[ -n "$CHOSEN_LANG" ]]; then
+                    DETECTED_LANG="$CHOSEN_LANG"
+                    DETECTED_LCID="${LCID[$CHOSEN_LANG]}"
+                    echo "Selected: $DETECTED_LANG (LCID: $DETECTED_LCID)"
+                    break
+                else
+                    echo "Invalid selection, please try again."
+                fi
+            done
+        fi
+    fi
+
+    # Check if 7z is available for extracting language folders from the installer
+    if ! command -v 7z &>/dev/null; then
+        echo "WARNING: 7z is not installed. Cannot extract additional language files from the installer." >&2
+        echo "         Only the already-installed language ($DETECTED_LANG) will be available." >&2
+    else
+        echo "Extracting $DETECTED_LANG language files from installer..."
+        for GAME in "${!GAMES[@]}"; do
+            IFS="|" read -r EXE_NAME DESKTOP_NAME ICON_NAME <<< "${GAMES[$GAME]}"
+            GAME_DIR="$GAMES_DIR/$GAME"
+
+            if [[ ! -d "$GAME_DIR" ]]; then
+                echo "  $DESKTOP_NAME install folder not found, skipping language extraction..."
+                continue
+            fi
+
+            # Extract any paths containing the target language folder into the game's directory.
+            # The installer is a self-extracting archive; paths inside follow the game folder structure.
+            TMPDIR_LANG=$(mktemp -d)
+            if 7z e "$GAMES_INSTALLER" -ir!"${GAME}/${DETECTED_LANG}/*" -o"$TMPDIR_LANG" -y &>/dev/null; then
+                if [[ -n "$(ls -A "$TMPDIR_LANG" 2>/dev/null)" ]]; then
+                    mkdir -p "$GAME_DIR/$DETECTED_LANG"
+                    cp -r "$TMPDIR_LANG/." "$GAME_DIR/$DETECTED_LANG/"
+                    echo "  Extracted $DETECTED_LANG files for $DESKTOP_NAME."
+                else
+                    echo "  No $DETECTED_LANG files found in installer for $DESKTOP_NAME."
+                fi
+            else
+                echo "  Could not extract $DETECTED_LANG files for $DESKTOP_NAME."
+            fi
+            rm -rf "$TMPDIR_LANG"
+        done
+    fi
+
+    echo "Patching reshacker scripts for locale $DETECTED_LANG (LCID: $DETECTED_LCID)..."
     while IFS= read -r -d '' script_file; do
         sed -i "s/1033/$DETECTED_LCID/g" "$script_file"
         sed -i "s/en-US/$DETECTED_LANG/g" "$script_file"
@@ -106,6 +215,8 @@ if [[ "$DETECTED_LCID" -ne 1033 ]]; then
 else
     echo "Locale is en-US (1033) — no script patching needed."
 fi
+
+
 #just in case
 mkdir -p "$HOME/.local/share/applications"
 
@@ -163,8 +274,19 @@ EOF
 done
 
 #Cleanup stage
-read -rp "Clean up installers, temporary files, and uninstall Resource Hacker? [y/N] " CLEANUP
-if [[ "$CLEANUP" =~ ^[Yy]$ ]]; then
+echo ""
+if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
+    CLEANUP="y"
+else
+    echo "Cleanup options:"
+    echo "  y: Remove .mui folders, temporary files, and uninstall Resource Hacker"
+    echo "  p: Remove .mui folders and temporary files only (keep Resource Hacker)"
+    echo "  n: No cleanup"
+    read -rp "Choice? [y/p/N] " CLEANUP
+fi
+
+
+if [[ "$CLEANUP" =~ ^[YyPp]$ ]]; then
     #echo "Removing installers..."
     #rm -f "$HOME/Downloads/Windows7Games_for_Windows_11_10_8.exe"
     #rm -f "$HOME/Downloads/reshacker_setup.exe"
@@ -175,25 +297,47 @@ if [[ "$CLEANUP" =~ ^[Yy]$ ]]; then
         rm -rf "$dir"
     done
 
-    echo "Uninstalling Resource Hacker..."
-    RESHACKER_DIR="$HOME/.wine/drive_c/Program Files (x86)/Resource Hacker"
-    UNINSTALLER=$(find "$RESHACKER_DIR" -maxdepth 1 -name "unins*.exe" 2>/dev/null | head -n1)
-    if [[ -n "$UNINSTALLER" ]]; then
-        WINEDEBUG=-all wine "$UNINSTALLER" /SILENT 2>/dev/null
-    else
-        rm -rf "$RESHACKER_DIR"
-    fi
-    rm -f "$RE_HACKER_LNK"
-
-    if [[ -d "$RESHACKER_DIR" ]]; then
-        echo "Removing leftover Resource Hacker files..."
-        rm -rf "$RESHACKER_DIR"
-    fi
-
     echo "Removing leftover .png and .res files from game folders..."
     find "$GAMES_DIR" -maxdepth 2 -type f -name "*.png" -delete
     find "$GAMES_DIR" -maxdepth 2 -type f -name "*.res" -delete
 
+    if [[ "$CLEANUP" =~ ^[Yy]$ ]]; then
+        echo "Uninstalling Resource Hacker..."
+        RESHACKER_DIR="$HOME/.wine/drive_c/Program Files (x86)/Resource Hacker"
+        UNINSTALLER=$(find "$RESHACKER_DIR" -maxdepth 1 -name "unins*.exe" 2>/dev/null | head -n1)
+        if [[ -n "$UNINSTALLER" ]]; then
+            WINEDEBUG=-all wine "$UNINSTALLER" /SILENT 2>/dev/null
+        else
+            rm -rf "$RESHACKER_DIR"
+        fi
+        rm -f "$RE_HACKER_LNK"
+
+        if [[ -d "$RESHACKER_DIR" ]]; then
+            echo "Removing leftover Resource Hacker files..."
+            rm -rf "$RESHACKER_DIR"
+        fi
+    else
+        echo "Skipping Resource Hacker uninstall."
+    fi
+
     echo "Cleanup complete."
 fi
+
+# Remove any shortcuts Wine created in its programs menu during this session
+WINE_GAMES_MENU="$HOME/.local/share/applications/wine/Programs/Games"
+if [[ -d "$WINE_GAMES_MENU" ]]; then
+    REF_FILE=$(mktemp)
+    touch -d "@$SCRIPT_START" "$REF_FILE" 2>/dev/null || touch -t "$(date -d @"$SCRIPT_START" +%Y%m%d%H%M.%S)" "$REF_FILE"
+    mapfile -d '' NEW_SHORTCUTS < <(find "$WINE_GAMES_MENU" -maxdepth 1 -type f -newer "$REF_FILE" -print0)
+    rm -f "$REF_FILE"
+    if [[ "${#NEW_SHORTCUTS[@]}" -gt 0 ]]; then
+        for SHORTCUT in "${NEW_SHORTCUTS[@]}"; do
+            rm -f "$SHORTCUT"
+        done
+        echo "Removed Wine-generated menu shortcuts."
+    else
+        echo "No Wine-generated menu shortcuts to remove."
+    fi
+fi
+
 echo "Done."
