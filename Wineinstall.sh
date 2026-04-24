@@ -31,8 +31,12 @@ for loc in "$HOME/Downloads/Windows7Games_for_Windows_11_10_8.exe" "$(dirname "$
     [[ -f "$loc" ]] && GAMES_INSTALLER="$loc" && break
 done
 if [[ -z "$GAMES_INSTALLER" ]]; then
-    echo "WARNING: Windows7Games_for_Windows_11_10_8.exe not found in Downloads or next to the script." >&2
-    MISSING=1
+    echo "Windows7Games_for_Windows_11_10_8.exe not found."
+    read -rp "Please enter the full path to the installer: " GAMES_INSTALLER
+    if [[ ! -f "$GAMES_INSTALLER" ]]; then
+        echo "ERROR: File not found." >&2
+        MISSING=1
+    fi
 fi
 
 RESHACKER_INSTALLER=""
@@ -40,17 +44,12 @@ for loc in "$HOME/Downloads/reshacker_setup.exe" "$(dirname "$0")/reshacker_setu
     [[ -f "$loc" ]] && RESHACKER_INSTALLER="$loc" && break
 done
 if [[ -z "$RESHACKER_INSTALLER" ]]; then
-    echo "WARNING: reshacker_setup.exe not found in Downloads or next to the script." >&2
-    MISSING=1
-fi
-SCRIPT_DIR="$(dirname "$0")/reshacker_scripts"
-if [[ ! -d "$SCRIPT_DIR" ]]; then
-    echo "WARNING: reshacker_scripts folder not found next to the script." >&2
-    MISSING=1
-fi
-if [[ "$MISSING" -eq 1 ]]; then
-    echo "One or more requirements are missing. Aborting." >&2
-    exit 1
+    echo "reshacker_setup.exe not found."
+    read -rp "Please enter the full path to the installer: " RESHACKER_INSTALLER
+    if [[ ! -f "$RESHACKER_INSTALLER" ]]; then
+        echo "ERROR: File not found." >&2
+        MISSING=1
+    fi
 fi
 
 #Running installers silently or not
