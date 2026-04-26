@@ -1,7 +1,9 @@
 #!/bin/bash
 
 SCRIPT_START=$(date +%s)
-#find file in Documents, or next to script
+
+# Unified helper: find a file or folder by name/glob in Downloads or next to the script
+# Usage: find_asset <name_or_glob> [f|d]  — prints the path and returns 0 on success
 find_asset() {
     local pattern="$1" type="${2:-f}"
     for dir in "$HOME/Downloads" "$(dirname "$0")"; do
@@ -15,18 +17,22 @@ find_asset() {
 
 # If not running in an interactive terminal, log all output and auto-select all choices
 NON_INTERACTIVE=0
+LOG_FILE="$(dirname "$0")/install_$(date +%Y%m%d_%H%M%S).log"
 if [[ ! -t 1 ]]; then
     NON_INTERACTIVE=1
-    LOG_FILE="$(dirname "$0")/install_$(date +%Y%m%d_%H%M%S).log"
     exec > "$LOG_FILE" 2>&1
     echo "Running in non-interactive mode. Log: $LOG_FILE"
+else
+    exec > >(tee "$LOG_FILE") 2>&1
+    echo "Logging to $LOG_FILE"
 fi
 
-# Parse setup.txt for flag keywords: generate, delete, lang=<code>
+# Parse setup.txt for flag keywords: generate, cleanup=<y/p/r/n>, lang=<code>
 SETUP_TXT=$(find_asset "setup.txt") || true
 SETUP_GENERATE=0
 SETUP_DELETE=0
 SETUP_LANG=""
+SETUP_CLEANUP=""
 if [[ -f "$SETUP_TXT" ]]; then
     while IFS= read -r line; do
         line="${line// /}"          # strip spaces
@@ -36,8 +42,13 @@ if [[ -f "$SETUP_TXT" ]]; then
         if [[ "$line" == lang=* ]]; then
             SETUP_LANG="${line#lang=}"
         fi
+        if [[ "$line" == cleanup=* ]]; then
+            SETUP_CLEANUP="${line#cleanup=}"
+        fi
     done < "$SETUP_TXT"
 fi
+# delete keyword is shorthand for cleanup=y
+[[ "$SETUP_DELETE" -eq 1 && -z "$SETUP_CLEANUP" ]] && SETUP_CLEANUP="y"
 MISSING=0
 
 # Search for kron4ek wine tar package
@@ -56,7 +67,7 @@ if command -v wine &>/dev/null; then
     fi
 fi
 
-# Decide which wine to use: kron4ek takes priority when tar is found
+# Decide which wine to use — kron4ek takes priority when tar is found
 WINE_CMD="wine"
 WINE_USE_KRON4EK=0
 PREFIX="$HOME/.wine"
@@ -68,7 +79,7 @@ elif [[ -n "$WINE_TAR" ]]; then
     if [[ "$SYSTEM_WINE" -eq 1 ]]; then
         if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
             WINE_USE_KRON4EK=1
-            echo "kron4ek tar found: kron4ek wine will be used over system wine."
+            echo "kron4ek tar found — kron4ek wine will be used over system wine."
         else
             read -rp "Both system wine $SYS_WINE_VERSION and a kron4ek tar were found. Use kron4ek? [Y/n] " KRON4EK_CHOICE
             [[ ! "$KRON4EK_CHOICE" =~ ^[Nn]$ ]] && WINE_USE_KRON4EK=1 || echo "System wine $SYS_WINE_VERSION will be used."
@@ -154,39 +165,113 @@ else
     HAS_7Z=1
 fi
 
-HAS_PYTHON=0
-if command python3 --version &>/dev/null; then
-    HAS_PYTHON=1
-else
-    echo "WARNING: python3 is not installed. Log files from Resource Hacker will be garbled." >&2
-fi
+#Running installers silently or not
+GAMES_DIR="$PREFIX/drive_c/Program Files/Microsoft Games"
 
-HAS_PETOOLS=0
-if [[ "$HAS_PYTHON" -eq 1 ]]; then
-    if pip show pe_tools &>/dev/null; then
-        HAS_PETOOLS=1
+SKIP_INSTALL=0
+if [[ -f "$GAMES_DIR/unwin7games.exe" ]]; then
+    if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
+        echo "Games already installed — skipping installation."
+        SKIP_INSTALL=1
     else
-        echo "WARNING: pe_tools is not installed through pip." >&2
-        if [[ "$NON_INTERACTIVE" -eq 0 ]]; then
-            read -rp "Install pe_tools via pip now? [Y/n] " PIP_CHOICE
-            if [[ ! "$PIP_CHOICE" =~ ^[Nn]$ ]]; then
-                if pip install pe_tools; then
-                    HAS_PETOOLS=1
+        echo "Windows 7 Games appears to already be installed."
+        echo "  u: Uninstall (run uninstaller, then delete the games folder)"
+        echo "  s: Skip installation and patch already-installed games"
+        echo "  n: Continue with installation anyway"
+        read -rp "Choice? [u/s/N] " ALREADY_INSTALLED
+        case "${ALREADY_INSTALLED,,}" in
+            u)
+                echo "Uninstalling existing games..."
+                if [[ "$WINE_USE_KRON4EK" -eq 1 ]]; then
+                    echo "Deleting kron4ek wine folder..."
+                    rm -rf "$HOME/.kron4ek-wine"
                 else
-                    echo "WARNING: pip install failed. Script generation will be unavailable." >&2
+                    WINEDEBUG=-all "$WINE_CMD" "$GAMES_DIR/unwin7games.exe" /S
+                    wait
+                    echo "Deleting games folder..."
+                    rm -rf "$GAMES_DIR"
                 fi
-            fi
-        fi
-        if [[ "$HAS_PETOOLS" -eq 0 ]]; then
-            echo "         Script generation disabled. Pre-existing scripts will be used." >&2
-        fi
+                echo "Done."
+                exit 0
+                ;;
+            s)
+                SKIP_INSTALL=1
+                ;;
+        esac
     fi
 fi
 
-# Write the reshacker script generator next to the main script
-GEN_SCRIPT="$(dirname "$0")/reshacker_gen.py"
-if [[ "$HAS_PETOOLS" -eq 1 ]]; then
-    cat > "$GEN_SCRIPT" <<'PYEOF'
+#Table of: Folder_name = exe_name|display_name|icon_name (when installed by wine)
+declare -A GAMES=(
+    ["Chess"]="chess|Chess Titans|74F7"
+    ["FreeCell"]="FreeCell|FreeCell|585B"
+    ["Hearts"]="Hearts|Hearts|B17D"
+    ["Mahjong"]="Mahjong|Mahjong Titans|BD78"
+    ["Minesweeper"]="Minesweeper|Minesweeper|5687"
+    ["Purble Place"]="PurblePlace|Purble Place|ED83"
+    ["Solitaire"]="Solitaire|Solitaire|468A"
+    ["SpiderSolitaire"]="SpiderSolitaire|Spider Solitaire|D17D"
+)
+
+SCRIPT_DIR="$(dirname "$0")/reshacker_scripts"
+
+# Check whether pre-built reshacker scripts cover all games
+HAS_SCRIPTS=0
+FORCE_GENERATE=0
+if [[ -d "$SCRIPT_DIR" ]]; then
+    ALL_PRESENT=1
+    for _GAME in "${!GAMES[@]}"; do
+        IFS="|" read -r _EXE _ _ <<< "${GAMES[$_GAME]}"
+        [[ ! -f "$SCRIPT_DIR/$_EXE-script.txt" ]] && ALL_PRESENT=0 && break
+    done
+    [[ "$ALL_PRESENT" -eq 1 ]] && HAS_SCRIPTS=1
+fi
+[[ "$SETUP_GENERATE" -eq 1 ]] && FORCE_GENERATE=1
+
+# Ask whether to use existing scripts or generate, then check pe_tools only if needed
+if [[ "$HAS_SCRIPTS" -eq 1 && "$NON_INTERACTIVE" -eq 0 && "$FORCE_GENERATE" -eq 0 ]]; then
+    echo "Pre-built reshacker scripts found."
+    read -rp "Use existing scripts or regenerate? [u/g, default: u] " SCRIPT_CHOICE
+    [[ "${SCRIPT_CHOICE,,}" == "g" ]] && FORCE_GENERATE=1
+fi
+
+HAS_PYTHON=0
+HAS_PETOOLS=0
+GEN_SCRIPT="$(dirname "$0")/gen_reshacker_script.py"
+
+if [[ "$HAS_SCRIPTS" -eq 0 || "$FORCE_GENERATE" -eq 1 ]]; then
+    if command -v python3 &>/dev/null; then
+        HAS_PYTHON=1
+    else
+        echo "WARNING: python3 is not installed. Log files from Resource Hacker will be garbled." >&2
+    fi
+
+    if [[ "$HAS_PYTHON" -eq 1 ]]; then
+        if pip show pe_tools &>/dev/null; then
+            HAS_PETOOLS=1
+        else
+            echo "WARNING: pe_tools is not installed." >&2
+            if [[ "$NON_INTERACTIVE" -eq 0 ]]; then
+                read -rp "Install pe_tools via pip now? [Y/n] " PIP_CHOICE
+                if [[ ! "$PIP_CHOICE" =~ ^[Nn]$ ]]; then
+                    if pip install pe_tools --break-system-packages; then
+                        HAS_PETOOLS=1
+                    else
+                        echo "WARNING: pip install failed. Script generation will be unavailable." >&2
+                    fi
+                fi
+            fi
+            if [[ "$HAS_PETOOLS" -eq 0 ]]; then
+                echo "         Script generation disabled. Pre-existing scripts will be used." >&2
+                FORCE_GENERATE=0
+            fi
+        fi
+    else
+        FORCE_GENERATE=0
+    fi
+
+    if [[ "$HAS_PETOOLS" -eq 1 ]]; then
+        cat > "$GEN_SCRIPT" <<'PYEOF'
 import subprocess
 import sys
 
@@ -221,7 +306,7 @@ def get_reshack_lines(mui_path, win_game_dir, exe_name, skip_types=('MUI',)):
     return lines
 
 if len(sys.argv) < 4:
-    print("Usage: reshacker_gen.py <mui_path> <game_folder> <exe_name>", file=sys.stderr)
+    print("Usage: gen_reshacker_script.py <mui_path> <game_folder> <exe_name>", file=sys.stderr)
     sys.exit(1)
 
 MUI_FILE  = sys.argv[1]
@@ -241,6 +326,12 @@ print(f'Log= "logs\\{EXE_NAME}-log.log"')
 print('[COMMANDS]')
 print('\n'.join(commands))
 PYEOF
+    fi
+fi
+
+# setup.txt generate overrides pe_tools gate only if pe_tools actually available
+if [[ "$SETUP_GENERATE" -eq 1 && "$HAS_PETOOLS" -eq 0 ]]; then
+    echo "WARNING: generate requested in setup.txt but pe_tools is not available; ignoring." >&2
 fi
 
 GAMES_INSTALLER=$(find_asset "Windows7Games_for_Windows_11_10_8.exe") || true
@@ -255,72 +346,9 @@ if [[ -z "$RESHACKER_INSTALLER" ]]; then
     MISSING=1
 fi
 
-SCRIPT_DIR="$(dirname "$0")/reshacker_scripts"
-
-#Table of: Folder_name = exe_name|display_name|icon_name (when installed by wine)
-declare -A GAMES=(
-    ["Chess"]="chess|Chess Titans|74F7_chess.0"
-    ["FreeCell"]="FreeCell|FreeCell|585B_FreeCell.0"
-    ["Hearts"]="Hearts|Hearts|B17D_Hearts.0"
-    ["Mahjong"]="Mahjong|Mahjong Titans|BD78_Mahjong.0"
-    ["Minesweeper"]="Minesweeper|Minesweeper|5687_Minesweeper.0"
-    ["Purble Place"]="PurblePlace|Purble Place|ED83_PurblePlace.0"
-    ["Solitaire"]="Solitaire|Solitaire|468A_Solitaire.0"
-    ["SpiderSolitaire"]="SpiderSolitaire|Spider Solitaire|D17D_SpiderSolitaire.0"
-)
-
-# Check whether pre-built reshacker scripts cover all games
-HAS_SCRIPTS=0
-FORCE_GENERATE=0
-if [[ -d "$SCRIPT_DIR" ]]; then
-    ALL_PRESENT=1
-    for _GAME in "${!GAMES[@]}"; do
-        IFS="|" read -r _EXE _ _ <<< "${GAMES[$_GAME]}"
-        [[ ! -f "$SCRIPT_DIR/$_EXE-script.txt" ]] && ALL_PRESENT=0 && break
-    done
-    [[ "$ALL_PRESENT" -eq 1 ]] && HAS_SCRIPTS=1
-fi
-[[ "$SETUP_GENERATE" -eq 1 ]] && FORCE_GENERATE=1
-
-# If setup.txt forces generation but pe_tools are unavailable, warn and clear the flag
-if [[ "$FORCE_GENERATE" -eq 1 && "$HAS_PETOOLS" -eq 0 ]]; then
-    echo "WARNING: generate requested in setup.txt but pe_tools is not available; ignoring." >&2
-    FORCE_GENERATE=0
-fi
-
 if [[ "$MISSING" -eq 1 ]]; then
     echo "One or more requirements are missing. Aborting." >&2
     exit 1
-fi
-
-#Running installers silentrly or not
-GAMES_DIR="$PREFIX/drive_c/Program Files/Microsoft Games"
-SKIP_INSTALL=0
-if [[ -f "$GAMES_DIR/unwin7games.exe" ]]; then
-    if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
-        echo "Games already installed: skipping installation."
-        SKIP_INSTALL=1
-    else
-        echo "Windows 7 Games appears to already be installed."
-        echo "  u: Uninstall (run uninstaller, then delete the games folder)"
-        echo "  s: Skip installation and patch already-installed games"
-        echo "  n: Continue with installation anyway"
-        read -rp "Choice? [u/s/N] " ALREADY_INSTALLED
-        case "${ALREADY_INSTALLED,,}" in
-            u)
-                echo "Uninstalling existing games..."
-                WINEDEBUG=-all "$WINE_CMD" "$GAMES_DIR/unwin7games.exe" /S
-                wait
-                echo "Deleting games folder..."
-                rm -rf "$GAMES_DIR"
-                echo "Done."
-                exit 0
-                ;;
-            s)
-                SKIP_INSTALL=1
-                ;;
-        esac
-    fi
 fi
 
 if [[ "$SKIP_INSTALL" -eq 0 ]]; then
@@ -376,18 +404,18 @@ RE_HACKER="${RE_HACKER//\\//}"
 [[ ! -f "$RE_HACKER" ]] && RE_HACKER="$PREFIX/drive_c/Program Files (x86)/Resource Hacker/ResourceHacker.exe"
 
 #Default language for scripts
-DETECTED_LCID=1033
-DETECTED_LANG="en-US"
+LCID_USED=1033
+LANG_USED="en-US"
 LANG_FORCED=0
 
 # Check for lang= override from setup.txt
 if [[ -n "$SETUP_LANG" ]]; then
     for LANG_CODE in "${!LCID[@]}"; do
         if [[ "$SETUP_LANG" == "${LANG_CODE,,}" ]]; then
-            DETECTED_LANG="$LANG_CODE"
-            DETECTED_LCID="${LCID[$LANG_CODE]}"
+            LANG_USED="$LANG_CODE"
+            LCID_USED="${LCID[$LANG_CODE]}"
             LANG_FORCED=1
-            echo "Language overridden by setup.txt: $DETECTED_LANG (LCID: $DETECTED_LCID)"
+            echo "Language overridden by setup.txt: $LANG_USED (LCID: $LCID_USED)"
             break
         fi
     done
@@ -400,47 +428,44 @@ fi
 if [[ "$LANG_FORCED" -eq 0 ]]; then
     for LANG_CODE in "${!LCID[@]}"; do
         if find "$GAMES_DIR" -maxdepth 2 -type d -name "$LANG_CODE" -print -quit | grep -q .; then
-            DETECTED_LCID="${LCID[$LANG_CODE]}"
-            DETECTED_LANG="$LANG_CODE"
+            LCID_USED="${LCID[$LANG_CODE]}"
+            LANG_USED="$LANG_CODE"
             break
         fi
     done
 fi
 
-#Modifies scripts if language is not english-US
-if [[ "$DETECTED_LCID" -ne 1033 ]]; then
-
-    if [[ "$LANG_FORCED" -eq 1 || "$NON_INTERACTIVE" -eq 1 ]]; then
-        echo "Using language: $DETECTED_LANG (LCID: $DETECTED_LCID)"
-    else
-        # Ask if the detected language is the one the user wants
-        echo "Detected installed language: $DETECTED_LANG (LCID: $DETECTED_LCID)"
-        read -rp "Use this language for patching? [Y/n] " LANG_CONFIRM
-        if [[ "$LANG_CONFIRM" =~ ^[Nn]$ ]]; then
-            if [[ "$HAS_7Z" -eq 0 ]]; then
-                echo "Manual language selection is disabled without 7z." >&2
-            else
-                echo "Available languages:"
-                IFS=$'\n' SORTED_LANGS=($(printf '%s\n' "${!LCID[@]}" | sort)); unset IFS
-                select CHOSEN_LANG in "${SORTED_LANGS[@]}"; do
-                    if [[ -n "$CHOSEN_LANG" ]]; then
-                        DETECTED_LANG="$CHOSEN_LANG"
-                        DETECTED_LCID="${LCID[$CHOSEN_LANG]}"
-                        echo "Selected: $DETECTED_LANG (LCID: $DETECTED_LCID)"
-                        break
-                    else
-                        echo "Invalid selection, please try again."
-                    fi
-                done
-            fi
+#Language selection
+if [[ "$LANG_FORCED" -eq 1 || "$NON_INTERACTIVE" -eq 1 ]]; then
+    echo "Using language: $LANG_USED (LCID: $LCID_USED)"
+else
+    echo "Detected language: $LANG_USED (LCID: $LCID_USED)"
+    read -rp "Use this language for patching? [Y/n] " LANG_CONFIRM
+    if [[ "$LANG_CONFIRM" =~ ^[Nn]$ ]]; then
+        if [[ "$HAS_7Z" -eq 0 ]]; then
+            echo "Manual language selection requires 7z, which is not installed." >&2
+        else
+            echo "Available languages:"
+            IFS=$'\n' SORTED_LANGS=($(printf '%s\n' "${!LCID[@]}" | sort)); unset IFS
+            select CHOSEN_LANG in "${SORTED_LANGS[@]}"; do
+                if [[ -n "$CHOSEN_LANG" ]]; then
+                    LANG_USED="$CHOSEN_LANG"
+                    LCID_USED="${LCID[$CHOSEN_LANG]}"
+                    echo "Selected: $LANG_USED (LCID: $LCID_USED)"
+                    break
+                else
+                    echo "Invalid selection, please try again."
+                fi
+            done
         fi
     fi
+fi
 
+#Modifies scripts if language is not english-US
+if [[ "$LCID_USED" -ne 1033 ]]; then
     # Extract language folders from installer if 7z is available
-    if [[ "$HAS_7Z" -eq 0 ]]; then
-        echo "         Only the already-installed language ($DETECTED_LANG) will be available." >&2
-    else
-        echo "Extracting $DETECTED_LANG language files from installer..."
+    if [[ "$HAS_7Z" -eq 1 ]]; then
+        echo "Extracting $LANG_USED language files from installer..."
         for GAME in "${!GAMES[@]}"; do
             IFS="|" read -r EXE_NAME DESKTOP_NAME ICON_NAME <<< "${GAMES[$GAME]}"
             GAME_DIR="$GAMES_DIR/$GAME"
@@ -450,31 +475,29 @@ if [[ "$DETECTED_LCID" -ne 1033 ]]; then
                 continue
             fi
 
-            # Extract any paths containing the target language folder into the game's directory.
-            # The installer is a self-extracting archive; paths inside follow the game folder structure.
             TMPDIR_LANG=$(mktemp -d)
-            if 7z e "$GAMES_INSTALLER" -ir!"${GAME}/${DETECTED_LANG}/*" -o"$TMPDIR_LANG" -y &>/dev/null; then
+            if 7z e "$GAMES_INSTALLER" -ir!"${GAME}/${LANG_USED}/*" -o"$TMPDIR_LANG" -y &>/dev/null; then
                 if [[ -n "$(ls -A "$TMPDIR_LANG" 2>/dev/null)" ]]; then
-                    mkdir -p "$GAME_DIR/$DETECTED_LANG"
-                    cp -r "$TMPDIR_LANG/." "$GAME_DIR/$DETECTED_LANG/"
-                    echo "  Extracted $DETECTED_LANG files for $DESKTOP_NAME."
+                    mkdir -p "$GAME_DIR/$LANG_USED"
+                    cp -r "$TMPDIR_LANG/." "$GAME_DIR/$LANG_USED/"
+                    echo "  Extracted $LANG_USED files for $DESKTOP_NAME."
                 else
-                    echo "  No $DETECTED_LANG files found in installer for $DESKTOP_NAME."
+                    echo "  No $LANG_USED files found in installer for $DESKTOP_NAME."
                 fi
             else
-                echo "  Could not extract $DETECTED_LANG files for $DESKTOP_NAME."
+                echo "  Could not extract $LANG_USED files for $DESKTOP_NAME."
             fi
             rm -rf "$TMPDIR_LANG"
         done
     fi
 
-    echo "Patching reshacker scripts for locale $DETECTED_LANG (LCID: $DETECTED_LCID)..."
+    echo "Patching reshacker scripts for locale $LANG_USED (LCID: $LCID_USED)..."
     while IFS= read -r -d '' script_file; do
-        sed -i "s/1033/$DETECTED_LCID/g" "$script_file"
-        sed -i "s/en-US/$DETECTED_LANG/g" "$script_file"
+        sed -i "s/1033/$LCID_USED/g" "$script_file"
+        sed -i "s/en-US/$LANG_USED/g" "$script_file"
     done < <(find "$SCRIPT_DIR" -maxdepth 1 -type f -name "*.txt" -print0)
 else
-    echo "Locale is en-US (1033): no script patching needed."
+    echo "Locale is en-US (1033) — no script patching needed."
 fi
 
 #just in case
@@ -491,7 +514,12 @@ for GAME in "${!GAMES[@]}"; do
     echo "Processing $DESKTOP_NAME..."
 
     # Find MUI file
-    MUI_FILE=$(find "$GAMES_DIR/$GAME" -type f -name "*.mui" | head -n 1)
+    # Look in language subfolder first when a non-English language is selected
+    MUI_FILE=""
+    if [[ "$LANG_USED" != "en-US" ]]; then
+        MUI_FILE=$(find "$GAMES_DIR/$GAME/$LANG_USED" -type f -name "*.mui" 2>/dev/null | head -n 1)
+    fi
+    [[ -z "$MUI_FILE" ]] && MUI_FILE=$(find "$GAMES_DIR/$GAME" -type f -name "*.mui" | head -n 1)
 
     if [[ ! -f "$MUI_FILE" ]]; then
         echo "No MUI file found for $DESKTOP_NAME, skipping..."
@@ -511,13 +539,15 @@ for GAME in "${!GAMES[@]}"; do
 
     clean_log() {
         local log_file="$1"
-        if [[ "$HAS_PYTHON" -eq 1 && -f "$log_file" ]]; then
-            python3 -c "
+        if [[ -f "$log_file" ]]; then
+            if command -v python3 &>/dev/null; then
+                python3 -c "
 import sys
 path = sys.argv[1]
 data = open(path, 'rb').read()
 open(path, 'wb').write(data[::2])
 " "$log_file"
+            fi
         fi
     }
     clean_log "$LOG_DIR/${EXE_NAME}-log.log"
@@ -529,7 +559,7 @@ Name=$DESKTOP_NAME
 Exec="$WINE_CMD" '$GAMES_DIR/$GAME/$EXE_NAME.exe'
 Type=Application
 StartupNotify=true
-Icon=$ICON_NAME
+Icon=${ICON_NAME}_${EXE_NAME}.0
 Categories=Game;
 Terminal=false
 EOF
@@ -540,44 +570,54 @@ done
 
 #Cleanup stage
 echo ""
-if [[ "$NON_INTERACTIVE" -eq 1 || "$SETUP_DELETE" -eq 1 ]]; then
-    CLEANUP="y"
+if [[ -n "$SETUP_CLEANUP" ]]; then
+    CLEANUP="$SETUP_CLEANUP"
+    echo "Cleanup: using setup.txt value '$CLEANUP'."
+elif [[ "$NON_INTERACTIVE" -eq 1 ]]; then
+    CLEANUP="n"
+    echo "Non-interactive mode: skipping cleanup (set cleanup= in setup.txt to change)."
 else
     echo "Cleanup options:"
-    echo "  y : Remove .mui folders, temporary files, and uninstall Resource Hacker"
-    echo "  p : Remove .mui folders and temporary files only (keep Resource Hacker)"
-    echo "  n : Skip cleanup"
-    read -rp "Choice? [y/p/N] " CLEANUP
+    echo "  y: Remove temp files, uninstall Resource Hacker and its shortcut"
+    echo "  r: Remove temp files only, keep Resource Hacker and its shortcut"
+    echo "  c: Remove only .res files created by the script"
+    echo "  n: Skip cleanup"
+    read -rp "Choice? [y/r/c/N] " CLEANUP
 fi
 
-if [[ "$CLEANUP" =~ ^[YyPp]$ ]]; then
-    echo "Removing .mui folders..."
-    find "$GAMES_DIR" -type f -name "*.mui" -exec dirname {} \; | sort -u | while read -r dir; do
-        echo "  Deleting: $dir"
-        rm -rf "$dir"
-    done
+RESHACKER_DIR="$PREFIX/drive_c/Program Files (x86)/Resource Hacker"
 
-    echo "Removing leftover .png and .res files from game folders..."
-    find "$GAMES_DIR" -maxdepth 2 -type f -name "*.png" -delete
-    find "$GAMES_DIR" -maxdepth 2 -type f -name "*.res" -delete
-
-    if [[ "$CLEANUP" =~ ^[Yy]$ ]]; then
-        echo "Uninstalling Resource Hacker..."
-        RESHACKER_DIR="$PREFIX/drive_c/Program Files (x86)/Resource Hacker"
-        UNINSTALLER=$(find "$RESHACKER_DIR" -maxdepth 1 -name "unins*.exe" 2>/dev/null | head -n1)
-        if [[ -n "$UNINSTALLER" ]]; then
-            WINEDEBUG=-all "$WINE_CMD" "$UNINSTALLER" /SILENT 2>/dev/null
-        else
-            rm -rf "$RESHACKER_DIR"
-        fi
-        rm -f "$RE_HACKER_LNK"
-
-        if [[ -d "$RESHACKER_DIR" ]]; then
-            echo "Removing leftover Resource Hacker files..."
-            rm -rf "$RESHACKER_DIR"
-        fi
+if [[ "$CLEANUP" =~ ^[YyRrCc]$ ]]; then
+    if [[ "$CLEANUP" =~ ^[Cc]$ ]]; then
+        echo "Removing .res files created by the script..."
+        find "$GAMES_DIR" -maxdepth 2 -type f -name "*.res" -delete
     else
-        echo "Skipping Resource Hacker uninstall."
+        echo "Removing .mui folders..."
+        find "$GAMES_DIR" -type f -name "*.mui" -exec dirname {} \; | sort -u | while read -r dir; do
+            echo "  Deleting: $dir"
+            rm -rf "$dir"
+        done
+
+        echo "Removing leftover .png and .res files from game folders..."
+        find "$GAMES_DIR" -maxdepth 2 -type f -name "*.png" -delete
+        find "$GAMES_DIR" -maxdepth 2 -type f -name "*.res" -delete
+
+        if [[ "$CLEANUP" =~ ^[Yy]$ ]]; then
+            echo "Uninstalling Resource Hacker..."
+            UNINSTALLER=$(find "$RESHACKER_DIR" -maxdepth 1 -name "unins*.exe" 2>/dev/null | head -n1)
+            if [[ -n "$UNINSTALLER" ]]; then
+                WINEDEBUG=-all "$WINE_CMD" "$UNINSTALLER" /SILENT 2>/dev/null
+            else
+                rm -rf "$RESHACKER_DIR"
+            fi
+            if [[ -d "$RESHACKER_DIR" ]]; then
+                echo "Removing leftover Resource Hacker files..."
+                rm -rf "$RESHACKER_DIR"
+            fi
+            rm -f "$RE_HACKER_LNK"
+        else
+            echo "Keeping Resource Hacker installed."
+        fi
     fi
 
     echo "Cleanup complete."
