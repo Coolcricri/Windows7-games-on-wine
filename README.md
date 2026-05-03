@@ -3,7 +3,7 @@ This is a guide to show how to get classic windows 7 games working through WINE.
 
 The modified games should be functiona on any x86 system from wine 11.0, but sound may be broken (verified it works on Bazzite if installed with rpm-ostree)
 
-## Prerequisites
+## Prerequisites + warnings
 [Wine](https://gitlab.winehq.org/wine/wine/-/wikis/Download) installed on your system, starting with 11.0, as that is when running 32bit application alongside 64bit ones is available.
 
 An alternative to not install wine in the sytem is using the pre-compiled [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (wine-xx.x-amd64-wow64.tar.xz), placing in a folder with its own prefix (if it is used alongside regular wine it might break some apps already installed, as it wants to change the default prefix settings), and then running it from there.
@@ -12,7 +12,27 @@ For the games themselves, the [windows 7 games installer](https://win7games.com/
 
 The tool used to fix the executables used in this guide is [resource hacker](https://www.angusj.com/resourcehacker).
 
-## Instruction
+The auto installer uses 7zip(7z) to manually select from available languages by unzipping the installer and extracting the files. Though the hashes to do not match, testing both with english and other languages the patched games works fine. pyton3 and pe_tools (installed through pip) are required if you want to generate the subscripts that help patch the game, otherwise the included folder works just fine without them.
+
+As for the finished games, pressing F1/the "view help" submenu will just crash the game under wine, otherwise everything offline works. The three internes games are not supported by this script, as they do not work even patched regardless, [this local server hack](https://github.com/provigz/ZoneInternetGamesServer) is the first starting point, but I did not even try, since it uses dll injectors.
+## Auto script quick start
+After the prerequisites, files have to be in Downloads or next to the script file.
+
+The script supports either system or kron4ek wine (place .tar), then guides you through options in command line menus. Starting the script without a command line will choose the default options : all 8 offline games, english/language installed by installer, delete all useless files
+
+Desktop and menu shortcuts will be made for all installed games.
+
+To overrite all user decisions (even if running in terminal), a setup.txt file can be made to set: `generate` for generating the sub-scripts, `clean-all` to delete all useless files and unistall Resource Hacker, `clean-keep` to keep Resource Hacker but clean rest, and the language code (eg. `it-it` for Italian, case insensitive). Place them in separate lines in the text files
+
+## Auto script details
+Full list of languages: 
+```
+ar-SA, bg-BG, cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, et-EE, fi-FI, fr-FR, he-IL, hr-HR, hu-HU, it-IT, ja-JP,
+ko-KR, lt-LT, lv-LV, nb-NO, nl-NL, pl-PL, pt-BR, pt-PT, ro-RO, ru-RU, sk-SK, sl-SI, sr-Latn-CS, sv-SE, th-TH,
+tr-TR, uk-UA, zh-CN, zh-TW
+```
+
+## Manual instruction
 1. Execute the games installer with wine, select the language you prefer, it may take a bit for the installer to go to the next option.
 3. Click on the language you want to install, afterwards select whitch games will be installed (by default all offline games are selected), untick "learn more"'s at the end or you will get sent to a browser page
 4. SInce [MUI files are not supported by Wine](https://forum.winehq.org/viewtopic.php?t=37417), all games will not load the UI correctly, and some may just not open. To solve this, you will need to fix the games' files in your `~/.wine/drive_c/Program Files/Microsoft Games` by using resource hacker.
