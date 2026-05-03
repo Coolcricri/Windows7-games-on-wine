@@ -82,8 +82,87 @@ if [[ -n "$SETUP_TXT" ]]; then
     done < "$SETUP_TXT"
 fi
 MISSING=0
-# Search for kron4ek wine tar package
+# Shared path constants
+KRON4EK_BASE="$HOME/.kron4ek-wine"
+KRON4EK_PREFIX="$KRON4EK_BASE/wowMUIfix"
+KRON4EK_GAMES_DIR="$KRON4EK_PREFIX/drive_c/Program Files/Microsoft Games"
+SKIP_INSTALL=0
 WINE_TAR=$(find_asset "wine*.tar.xz") || true
+# Check if games are already installed in .kron4ek-wine prefix
+KRON4EK_INSTALLED_VER=""
+if [[ -d "$KRON4EK_BASE" ]]; then
+    KRON4EK_INSTALLED_VER=$(find "$KRON4EK_BASE" -maxdepth 1 -type d -name "wine*" | head -n1)
+    KRON4EK_INSTALLED_VER=$(basename "$KRON4EK_INSTALLED_VER")
+fi
+if [[ -n "$KRON4EK_INSTALLED_VER" && "$NON_INTERACTIVE" -eq 0 ]]; then
+    echo "Existing kron4ek wine installation found: $KRON4EK_INSTALLED_VER"
+    echo "  Saves are stored in: $KRON4EK_PREFIX/drive_c/users/$USER/"
+    # Check if tar has a different version than what is installed
+    TAR_DIFFERS=0
+    winever_new=""
+    if [[ -n "$WINE_TAR" ]]; then
+        winever_new=$(basename "$WINE_TAR" .tar.xz)
+        [[ "$winever_new" != "$KRON4EK_INSTALLED_VER" ]] && TAR_DIFFERS=1
+    fi
+    #kron4ek wine istallation menu + replace the runner with a newer version if detected
+    echo "Options:"
+    echo "  u: Uninstall games only (keeps wine runner and prefix)"
+    echo "  d: Delete entire .kron4ek-wine folder (removes games, saves, and wine runner)"
+    echo "  s: Skip installation, patch already-installed games"
+    echo "  r: Run installers anyway (reinstall games)"
+    [[ "$TAR_DIFFERS" -eq 1 ]] && echo "  w: Replace wine runner with $winever_new, remake krowine, then exit"
+    echo "  n: Continue normally"
+    read -rp "Choice? [u/d/s/r${TAR_DIFFERS:+/w}/N] " KRON4EK_CHOICE
+    case "${KRON4EK_CHOICE,,}" in
+        u)
+            echo "Uninstalling games from kron4ek prefix..."
+            WINEDEBUG=-all "$HOME/.local/bin/krowine" "$KRON4EK_GAMES_DIR/unwin7games.exe" /S 2>/dev/null || true
+            wait
+            rm -rf "$KRON4EK_GAMES_DIR"
+            echo "Games removed. Wine runner and saves preserved."
+            echo "Saves are stored in: $KRON4EK_PREFIX/drive_c/users/$USER/"
+            echo "Done."
+            exit 0
+            ;;
+        d)
+            echo "Deleting entire .kron4ek-wine folder..."
+            rm -rf "$KRON4EK_BASE"
+            rm -f "$HOME/.local/bin/krowine"
+            echo "Done."
+            exit 0
+            ;;
+        s)
+            SKIP_INSTALL=1
+            WINE_USE_KRON4EK=1
+            PREFIX="$KRON4EK_PREFIX"
+            WINE_CMD="$HOME/.local/bin/krowine"
+            ;;
+        r)
+            WINE_USE_KRON4EK=1
+            PREFIX="$KRON4EK_PREFIX"
+            WINE_CMD="$HOME/.local/bin/krowine"
+            ;;
+        w)
+            if [[ "$TAR_DIFFERS" -eq 1 ]]; then
+                echo "Removing old wine runner: $KRON4EK_INSTALLED_VER..."
+                rm -rf "${KRON4EK_BASE:?}/${KRON4EK_INSTALLED_VER:?}"
+                echo "Extracting new runner: $winever_new..."
+                tar -xf "$WINE_TAR" -C "$KRON4EK_BASE/"
+                echo "Remaking krowine..."
+                mkdir -p "$HOME/.local/bin"
+                cat > "$HOME/.local/bin/krowine" <<'KROWINE'
+#!/bin/bash
+KROWINE
+                echo "env WINEPREFIX=\"$KRON4EK_PREFIX\" WINEDEBUG=-all \"$KRON4EK_BASE/$winever_new/bin/wine\" \"\$@\"" \
+                    >> "$HOME/.local/bin/krowine"
+                chmod +x "$HOME/.local/bin/krowine"
+                echo "krowine remade at $HOME/.local/bin/krowine; run krowine /path/to/program.exe to use it."
+                echo "Done."
+                exit 0
+            fi
+            ;;
+    esac
+fi
 # Check system wine
 SYSTEM_WINE=0
 if command -v wine &>/dev/null; then
@@ -162,23 +241,26 @@ if [[ "$WINE_USE_KRON4EK" -eq 1 ]]; then
             fi
         fi
     fi
-#kron4ek tar extract, set up .kron4ek location, make "krowine" sript shortcut, use to start directly in separate prefix with kron4ek-wine
+#kron4ek tar extract, set up .kron4ek location, make "krowine" script shortcut
     if [[ "$WINE_USE_KRON4EK" -eq 1 ]]; then
         echo "Detected kron4ek wine $TAR_WINE_VERSION will be used."
-        mkdir -p "$HOME/.kron4ek-wine"
+        mkdir -p "$KRON4EK_BASE"
         ICONS_SRC="$(dirname "$0")/icons"
-        [[ -d "$ICONS_SRC" ]] && cp -a "$ICONS_SRC/." "$HOME/.kron4ek-wine/icons"
+        [[ -d "$ICONS_SRC" ]] && cp -a "$ICONS_SRC/." "$KRON4EK_BASE/icons"
         echo "Extracting kron4ek wine..."
-        tar -xf "$WINE_TAR" -C "$HOME/.kron4ek-wine/"
+        tar -xf "$WINE_TAR" -C "$KRON4EK_BASE/"
         mkdir -p "$HOME/.local/bin"
         cat > "$HOME/.local/bin/krowine" <<'KROWINE'
 #!/bin/bash
 KROWINE
-        echo "env WINEPREFIX=\"\$HOME/.kron4ek-wine/wowMUIfix\" WINEDEBUG=-all \"$HOME/.kron4ek-wine/$winever/bin/wine\" \"\$@\"" \
+        echo "env WINEPREFIX=\"$KRON4EK_PREFIX\" WINEDEBUG=-all \"$KRON4EK_BASE/$winever/bin/wine\" \"\$@\"" \
             >> "$HOME/.local/bin/krowine"
         chmod +x "$HOME/.local/bin/krowine"
+        echo "krowine created at $HOME/.local/bin/krowine."
+        echo "  You can run it at any time to launch any executable using the kron4ek wine container:"
+        echo "  krowine /path/to/program.exe"
         WINE_CMD="$HOME/.local/bin/krowine"
-        PREFIX="$HOME/.kron4ek-wine/wowMUIfix"
+        PREFIX="$KRON4EK_PREFIX"
     else
         echo "Detected system wine $SYS_WINE_VERSION will be used."
     fi
@@ -190,62 +272,53 @@ if ! command -v 7z &>/dev/null; then
 else
     HAS_7Z=1
 fi
+#check if games are installed in system wine
 GAMES_DIR="$PREFIX/drive_c/Program Files/Microsoft Games"
-#Running installers silently or not
-SKIP_INSTALL=0
-if [[ -f "$GAMES_DIR/unwin7games.exe" ]]; then
-    if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
-        echo "Games already installed, skipping installation..."
-        SKIP_INSTALL=1
-    else
-        echo "Windows 7 Games detected to already be installed."
-        echo "  u: Uninstall and quit (run uninstaller, delete games folder)"
-        echo "  d: Uninstall and quit, also delete desktop and menu shortcuts"
-        echo "  s: Skip installation and patch already-installed games"
-        echo "  n: Continue with installation anyway"
-        read -rp "Choice? [u/d/s/N] " ALREADY_INSTALLED
-        case "${ALREADY_INSTALLED,,}" in
-            u|d)
-                echo "Uninstalling existing games..."
-                if [[ "$WINE_USE_KRON4EK" -eq 1 ]]; then
-                    echo "Deleting kron4ek wine folder..."
-                    rm -rf "$HOME/.kron4ek-wine"
-                else
-                    WINEDEBUG=-all "$WINE_CMD" "$GAMES_DIR/unwin7games.exe" /S
-                    wait
-                    echo "Deleting games folder..."
-                    rm -rf "$GAMES_DIR"
-                fi
-                if [[ "${ALREADY_INSTALLED,,}" == "d" ]]; then
-                    echo "Removing game shortcuts..."
-                    for _GAME in "${!GAMES[@]}"; do
-                        IFS="|" read -r _EXE _DISPLAY _ <<< "${GAMES[$_GAME]}"
-                        rm -f "$HOME/Desktop/${_GAME// /_}.desktop"
-                        rm -f "$HOME/.local/share/applications/${_GAME// /_}.desktop"
-                    done
-                fi
-                echo "Done."
-                exit 0
-                ;;
-            s)
-                SKIP_INSTALL=1
-                ;;
-        esac
-    fi
+if [[ -f "$GAMES_DIR/unwin7games.exe" && "$NON_INTERACTIVE" -eq 0 && "${SKIP_INSTALL}" -eq 0 ]]; then
+    echo "Windows 7 Games detected to already be installed."
+    echo "  Saves are stored in: $PREFIX/drive_c/users/$USER/"
+    echo "  u: Uninstall and quit (run uninstaller, delete games folder)"
+    echo "  d: Uninstall and quit, also delete desktop and menu shortcuts"
+    echo "  s: Skip installation and patch already-installed games"
+    echo "  n: Continue with installation anyway"
+    read -rp "Choice? [u/d/s/N] " ALREADY_INSTALLED
+    case "${ALREADY_INSTALLED,,}" in
+        u|d)
+            echo "Uninstalling existing games..."
+            WINEDEBUG=-all "$WINE_CMD" "$GAMES_DIR/unwin7games.exe" /S
+            wait
+            echo "Deleting games folder..."
+            rm -rf "$GAMES_DIR"
+            if [[ "${ALREADY_INSTALLED,,}" == "d" ]]; then
+                echo "Removing game shortcuts..."
+                for _GAME in "${!GAMES[@]}"; do
+                    IFS="|" read -r _EXE _DISPLAY _ <<< "${GAMES[$_GAME]}"
+                    rm -f "$HOME/Desktop/${_GAME// /_}.desktop"
+                    rm -f "$HOME/.local/share/applications/${_GAME// /_}.desktop"
+                done
+            fi
+            echo "Done."
+            exit 0
+            ;;
+        s)
+            SKIP_INSTALL=1
+            ;;
+    esac
+elif [[ -f "$GAMES_DIR/unwin7games.exe" && "$NON_INTERACTIVE" -eq 1 ]]; then
+    echo "Games already installed, skipping installation..."
+    SKIP_INSTALL=1
 fi
-#check file availability
+#check installers availability
 GAMES_INSTALLER=$(find_asset "Windows7Games_for_Windows_11_10_8.exe") || true
 if [[ -z "$GAMES_INSTALLER" ]]; then
     echo "WARNING: Windows7Games_for_Windows_11_10_8.exe not found in Downloads or next to the script." >&2
     MISSING=1
 fi
-
 RESHACKER_INSTALLER=$(find_asset "reshacker_setup.exe") || true
 if [[ -z "$RESHACKER_INSTALLER" ]]; then
     echo "WARNING: reshacker_setup.exe not found in Downloads or next to the script." >&2
     MISSING=1
 fi
-
 if [[ "$MISSING" -eq 1 ]]; then
     echo "One or more requirements are missing. Aborting." >&2
     exit 1
@@ -267,14 +340,22 @@ fi
 # Ask whether to use existing scripts or generate, then check pe_tools only if needed
 if [[ "$HAS_SCRIPTS" -eq 1 && "$NON_INTERACTIVE" -eq 0 && "$FORCE_GENERATE" -eq 0 ]]; then
     echo "Pre-built reshacker scripts found."
-    read -rp "Use existing scripts or regenerate? [u/g, default: u] " SCRIPT_CHOICE
+    echo "  u: Use existing scripts"
+    echo "  g: Regenerate scripts from MUI files"
+    read -rp "Choice? [U/g] " SCRIPT_CHOICE
     [[ "${SCRIPT_CHOICE,,}" == "g" ]] && FORCE_GENERATE=1
 elif [[ "$HAS_SCRIPTS" -eq 0 && "$FORCE_GENERATE" -eq 0 ]]; then
     echo "WARNING: No reshacker scripts found in reshacker_scripts/." >&2
     if [[ "$NON_INTERACTIVE" -eq 0 ]]; then
         echo "Scripts can be generated automatically using pe_tools."
-        read -rp "Generate scripts now? [Y/n] " GEN_CHOICE
-        [[ ! "$GEN_CHOICE" =~ ^[Nn]$ ]] && FORCE_GENERATE=1
+        echo "  y: Generate scripts now"
+        echo "  n: Abort"
+        read -rp "Choice? [Y/n] " GEN_CHOICE
+        if [[ ! "$GEN_CHOICE" =~ ^[Nn]$ ]]; then
+            FORCE_GENERATE=1
+        else
+            echo "Aborting." >&2; exit 1
+        fi
     fi
 fi
 [[ "$SETUP_GENERATE" -eq 1 ]] && echo "Script generation option overridden by setup.txt, regenerating."
@@ -404,7 +485,6 @@ if [[ "$SKIP_INSTALL" -eq 0 ]]; then
         wait
         echo "Resource Hacker installed."
     else
-        SILENT_INSTALL=0
         echo "Interactive mode:"
         echo "starting games installer, untick the [learn more] textboxes before finishing"
         WINEDEBUG=-all "$WINE_CMD" "$GAMES_INSTALLER"
@@ -506,8 +586,7 @@ else
     LANG_SCRIPT_DIR=""
 fi
 # When generating: write directly into the language folder if set, otherwise into the base folder
-GEN_WILL_RUN=0
-[[ "$HAS_PETOOLS" -eq 1 && ( "$HAS_SCRIPTS" -eq 0 || "$FORCE_GENERATE" -eq 1 ) ]] && GEN_WILL_RUN=1
+GEN_WILL_RUN=$(( HAS_PETOOLS == 1 && ( HAS_SCRIPTS == 0 || FORCE_GENERATE == 1 ) ? 1 : 0 ))
 if [[ "$GEN_WILL_RUN" -eq 1 ]]; then
     if [[ -n "$LANG_SCRIPT_DIR" ]]; then
         mkdir -p "$LANG_SCRIPT_DIR"
