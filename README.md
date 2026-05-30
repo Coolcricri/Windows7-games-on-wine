@@ -25,7 +25,7 @@ Desktop and menu shortcuts will be made for all installed games.
 To overrite all user decisions (even if running in terminal), a setup.txt file can be made to set: `generate` for generating the sub-scripts, `clean-all` to delete all useless files and unistall Resource Hacker, `clean-keep` to keep Resource Hacker but clean rest, and the language code (eg. `it-it` for Italian, case insensitive). Place them in separate lines in the text files
 
 > [!NOTE]
-> Big thanks to @Zatujit for figuring out how to patch the games with a script, and allowed me to steal his code for that ([their project](https://github.com/Zatujit/easy-win7-games-wine-patcher))
+> Big thanks to @Zatujit for figuring out how to patch the games with a script, and allowed me to steal his code for that from [their project](https://github.com/Zatujit/easy-win7-games-wine-patcher)
 ## Auto script details
 Full list of languages: 
 ```
