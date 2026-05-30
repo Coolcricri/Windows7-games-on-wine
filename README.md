@@ -37,16 +37,19 @@ tr-TR, uk-UA, zh-CN, zh-TW
 ## Manual instruction
 1. Execute the games installer with wine, select the language you prefer, it may take a bit for the installer to go to the next option.
 3. Click on the language you want to install, afterwards select whitch games will be installed (by default all offline games are selected), untick "learn more"'s at the end or you will get sent to a browser page
-4. SInce [MUI files are not supported by Wine](https://forum.winehq.org/viewtopic.php?t=37417), all games will not load the UI correctly, and some may just not open. To solve this, you will need to fix the games' files in your `~/.wine/drive_c/Program Files/Microsoft Games` by using resource hacker.
+4. SInce [MUI files are not supported by Wine currently](https://forum.winehq.org/viewtopic.php?t=37417), all games will not load the UI correctly, and some may just not open. To solve this, you will need to fix the games' files in your `~/.wine/drive_c/Program Files/Microsoft Games` by using resource hacker.
 - I tried contacting @AngusJohnson to ask how to set up a script to automate this, since I could not figure it out from the instructions on the website, but recieved no reply
 5. After installing resource hacker through Wine, in the app file => open, find `chess.exe` under `My computer -> C: -> Program Files/Microsoft Games`
 6. Open it, click on Action => Add from resource file
+  
    <img width="385" height="320" alt="rh1" src="https://github.com/user-attachments/assets/71013a9a-050c-4f5f-8852-6807ae88f0d7" />
 7. Select to display all files, enter the folder next to the executables, select the .MUI file
+  
    <img width="433" height="88" alt="rh2" src="https://github.com/user-attachments/assets/48fbacf3-abeb-465a-ab48-07fecc3a7a64" />
 8. Tick [overwrite], tick [check all], import, file => save
+  
    <img width="230" height="332" alt="rh3" src="https://github.com/user-attachments/assets/ab139f92-d689-4780-b390-4fd0724d4e31" />
-9. Repeat for all main .exe files n every game folder with matching .MUI's, you can also use the folder and floppy disk icons, or ctrl+o and ctrl+s for a faster experience. Full list of files to merge is:
+9. Repeat for all main .exe files and every game folder with matching .MUI's, you can also use the folder and floppy disk icons, or ctrl+o and ctrl+s for a faster experience. Full list of files to merge is:
 ```
 chess.exe + chess.exe.mui
 FreeCell.exe + FreeCell.exe.mui
@@ -64,7 +67,20 @@ SpiderSolitaire.exe + SpiderSolitaire.exe.mui
 > 
 > if wine did not create the shortcuts properly, it can be done manually by going to `.wine/drive_c/ProgramData/Microsoft/Windows/Start Menu/Programs/Games`, open a command line there, and type `wine winemenubuilder <.lnk name>` for every game you want a shortcut for.
 
-Icons folder included in repository to make desktop shortcuts.
+Icons folder included in repository to make desktop shortcuts more easily.
+
+
+## TO (maybe) DO
+
+In cleanup, also delete mimetype files that are created (not really useful in Wine)
+
+First check 7z availability if a .tar file is detected (7z is needed for .tar extraction + optional manual language selection)
+
+Extract python script to be a separate file? (smaller files, for most it will be unused)
+
+
+### Eventually: 
+internet games fixing, add new declaration with 7 entries: 3 .exe, 4 .dll (probably requires tinkering with [the server](https://github.com/provigz/ZoneInternetGamesServer) to figure out if the dll injector can work)
 
 
 ---
