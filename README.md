@@ -8,7 +8,7 @@ The modified games should be functional on any x86 system from wine 11.0, but so
 
 An alternative to not install wine in the sytem is using the pre-compiled [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (wine-xx.x-amd64-wow64.tar.xz), placing in a folder with its own prefix (if it is used alongside regular wine it might break some apps already installed, as it wants to change the default prefix settings), and then running it from there.
 
-For the games themselves, the [windows 7 games installer](https://win7games.com/#games) from Aero will be used, since it is packaged to be easy to install.
+For the games themselves, the [windows 7 games installer]([https://win7games.com/#games](https://archive.org/details/windows7games-for-windows-11-10-8)) from Aero will be used, since it is packaged to be easy to install. (there is a newer version on [their website](https://win7games.com/#games), but I have to rewrite parts of the script to cope with the changes) 
 
 The tool used to fix the executables used in this guide is [resource hacker](https://www.angusj.com/resourcehacker).
 
@@ -70,16 +70,18 @@ SpiderSolitaire.exe + SpiderSolitaire.exe.mui
 Icons folder included in repository to make desktop shortcuts more easily.
 
 
-## TO (maybe) DO
+## TO DO
+
+Installer 4.1, fix script to work with it (e.g. it now make desktop shortcuts and interferes)
+
+### Eventually:
 
 In cleanup, also delete mimetype files that are created (not really useful in Wine)
 
 First check 7z availability if a .tar file is detected (7z is needed for .tar extraction + optional manual language selection)
 
 Extract python script to be a separate file? (smaller files, for most it will be unused)
-
-
-### Eventually: 
+ 
 internet games fixing, add new declaration with 7 entries: 3 .exe, 4 .dll (probably requires tinkering with [the server](https://github.com/provigz/ZoneInternetGamesServer) to figure out if the dll injector can work)
 
 
