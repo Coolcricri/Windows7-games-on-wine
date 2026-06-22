@@ -17,7 +17,9 @@ The auto installer uses 7zip(7z) to manually select from available languages by 
 As for the finished games, pressing F1/the "view help" submenu will just crash the game under wine, otherwise everything offline works. The three internes games are not supported by this script, as they do not work even patched regardless, [this local server hack](https://github.com/provigz/ZoneInternetGamesServer) is the first starting point, but I did not even try, since it uses dll injectors.
 
 ## MUI patcher script
-The `muipatch.sh` uses a better method of patching .mui files (taken from [this older project](https://github.com/Juergen74/install-windows7games) that I did not find before) that completely removes the need for python or patching scripts. The main script is not using this route yet as the installer from Aero ([the website](https://win7games.com/#games)) got modified. This script does not hold your hand, but you just point it at a folder, and it will search up to 4 subfolders deep by default for .mui files, match them to .exe or .dll files (case insensitive), and patch them. The script leaves all files created behind (.res intermediate step, _original.exe/.dll as happens in Resource hacker manually). To change any unwanted behaviour modify the sript itself.
+The `muipatch.sh` uses a better method of patching .mui files (taken from [this older project](https://github.com/Juergen74/install-windows7games) that I did not find before) that completely removes the need for python or patching scripts. The main script is not using this route yet as the installer from Aero ([the website](https://win7games.com/#games)) got modified.
+This script does not hold your hand, but you just point it at a folder, and it will search up to 4 subfolders deep by default for .mui files, match them to .exe or .dll files (case insensitive), and patch them. 
+The script leaves all files created behind (.res intermediate step, _original.exe/.dll as happens in Resource hacker manually). To change any unwanted behaviour modify the sript itself.
 
 ## Auto script quick start
 After the prerequisites, files have to be in Downloads or next to the script file.
