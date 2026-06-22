@@ -8,13 +8,17 @@ The modified games should be functional on any x86 system from wine 11.0, but so
 
 An alternative to not install wine in the sytem is using the pre-compiled [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (wine-xx.x-amd64-wow64.tar.xz), placing in a folder with its own prefix (if it is used alongside regular wine it might break some apps already installed, as it wants to change the default prefix settings), and then running it from there.
 
-For the games themselves, the [windows 7 games installer]([https://win7games.com/#games](https://archive.org/details/windows7games-for-windows-11-10-8)) from Aero will be used, since it is packaged to be easy to install. (there is a newer version on [their website](https://win7games.com/#games), but I have to rewrite parts of the script to cope with the changes) 
+For the games themselves, the [windows 7 games installer]([https://win7games.com/#games](https://archive.org/details/windows7games-for-windows-11-10-8)) from Aero will be used, since it is packaged to be easy to install.
 
 The tool used to fix the executables used in this guide is [resource hacker](https://www.angusj.com/resourcehacker).
 
 The auto installer uses 7zip(7z) to manually select from available languages by unzipping the installer and extracting the files. Though the hashes to do not match, testing both with english and other languages the patched games works fine. pyton3 and pe_tools (installed through pip) are required if you want to generate the subscripts that help patch the game, otherwise the included folder works just fine without them.
 
 As for the finished games, pressing F1/the "view help" submenu will just crash the game under wine, otherwise everything offline works. The three internes games are not supported by this script, as they do not work even patched regardless, [this local server hack](https://github.com/provigz/ZoneInternetGamesServer) is the first starting point, but I did not even try, since it uses dll injectors.
+
+## MUI patcher script
+The `muipatch.sh` uses a better method of patching .mui files (taken from [this older project](https://github.com/Juergen74/install-windows7games) that I did not find before) that completely removes the need for python or patching scripts. The main script is not using this route yet as the installer from Aero ([the website](https://win7games.com/#games)) got modified. This script does not hold your hand, but you just point it at a folder, and it will search up to 4 subfolders deep by default for .mui files, match them to .exe or .dll files (case insensitive), and patch them. The script leaves all files created behind (.res intermediate step, _original.exe/.dll as happens in Resource hacker manually). To change any unwanted behaviour modify the sript itself.
+
 ## Auto script quick start
 After the prerequisites, files have to be in Downloads or next to the script file.
 
