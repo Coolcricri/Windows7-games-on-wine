@@ -1,25 +1,23 @@
 # Windows 7 games on Wine
 This is a guide to show how to get classic windows 7 games working through WINE.
 
-The modified games should be functional on any x86 system from wine 11.0, but sound may be broken (verified it works on Bazzite if installed with rpm-ostree)
+The modified games should be functional on any x86 system from wine 11.0 ~~, but sound may be broken (verified it works on Bazzite if installed with rpm-ostree)~~
+
+> [!IMPORTANT]
+> This current project will not be updated for some time, use the shell script from [my other repo](https://github.com/Coolcricri/.mui-patcher), it has less guardrails, but they matter less there. There is also a .exe plus a .bat file in the repo for hopefully making it work on Winlator, Gamehub and derivatives, but I do not consider it ready yet.
 
 ## Prerequisites + warnings
 [Wine](https://gitlab.winehq.org/wine/wine/-/wikis/Download) installed on your system, starting with 11.0, as that is when running 32bit application alongside 64bit ones is available.
 
-An alternative to not install wine in the sytem is using the pre-compiled [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (wine-xx.x-amd64-wow64.tar.xz), placing in a folder with its own prefix (if it is used alongside regular wine it might break some apps already installed, as it wants to change the default prefix settings), and then running it from there.
+The portable alternative is using the pre-compiled [kron4ek wine](https://github.com/Kron4ek/Wine-Builds/releases) (download and extract wine-xx.x-amd64-wow64.tar.xz), (use a separate prefix if Wine is already installed for fewer conflicts).
 
-For the games themselves, the [windows 7 games installer]([https://win7games.com/#games](https://archive.org/details/windows7games-for-windows-11-10-8)) from Aero will be used, since it is packaged to be easy to install.
+For the games themselves, the [windows 7 games installer](https://archive.org/details/windows7games-for-windows-11-10-8) from Aero will be used, since it is packaged to be easy to install.(the link is for the original version of the installer, as there have been various breaking changes on the official website that do not affect running the games through wine, and this script will not be updated for some time while they keep changing the installer)
 
 The tool used to fix the executables used in this guide is [resource hacker](https://www.angusj.com/resourcehacker).
 
 The auto installer uses 7zip(7z) to manually select from available languages by unzipping the installer and extracting the files. Though the hashes to do not match, testing both with english and other languages the patched games works fine. pyton3 and pe_tools (installed through pip) are required if you want to generate the subscripts that help patch the game, otherwise the included folder works just fine without them.
 
-As for the finished games, pressing F1/the "view help" submenu will just crash the game under wine, otherwise everything offline works. The three internes games are not supported by this script, as they do not work even patched regardless, [this local server hack](https://github.com/provigz/ZoneInternetGamesServer) is the first starting point, but I did not even try, since it uses dll injectors.
-
-## MUI patcher script
-The `muipatch.sh` uses a better method of patching .mui files (taken from [this older project](https://github.com/Juergen74/install-windows7games) that I did not find before) that completely removes the need for python or patching scripts. The main script is not using this route yet as the installer from Aero ([the website](https://win7games.com/#games)) got modified.
-This script does not hold your hand, but you just point it at a folder, and it will search up to 4 subfolders deep by default for .mui files, match them to .exe or .dll files (case insensitive), and patch them. 
-The script leaves all files created behind (.res intermediate step, _original.exe/.dll as happens in Resource hacker manually). To change any unwanted behaviour modify the sript itself.
+As for the finished games, pressing F1/the "view help" submenu will just crash the game under wine, otherwise everything offline works. The three internet games are not supported by this script, as they do not work even patched regardless, [this local server hack](https://github.com/provigz/ZoneInternetGamesServer) is the first starting point, but I did not even try, since it uses dll injectors.
 
 ## Auto script quick start
 After the prerequisites, files have to be in Downloads or next to the script file.
@@ -28,7 +26,7 @@ The script supports either system or kron4ek wine (place .tar), then guides you 
 
 Desktop and menu shortcuts will be made for all installed games.
 
-To overrite all user decisions (even if running in terminal), a setup.txt file can be made to set: `generate` for generating the sub-scripts, `clean-all` to delete all useless files and unistall Resource Hacker, `clean-keep` to keep Resource Hacker but clean rest, and the language code (eg. `it-it` for Italian, case insensitive). Place them in separate lines in the text files
+To overwrite all user decisions (even if running in terminal), a setup.txt file can be made to set: `generate` for generating the sub-scripts, `clean-all` to delete all useless files and unistall Resource Hacker, `clean-keep` to keep Resource Hacker but clean rest, and the language code (eg. `it-it` for Italian, case insensitive). Place them in separate lines in the text files
 
 > [!NOTE]
 > Big thanks to @Zatujit for figuring out how to patch the games with a script, and allowed me to steal his code for that from [their project](https://github.com/Zatujit/easy-win7-games-wine-patcher)
@@ -78,7 +76,7 @@ Icons folder included in repository to make desktop shortcuts more easily.
 
 ## TO DO
 
-Installer 4.1, fix script to work with it (e.g. it now make desktop shortcuts and interferes)
+Wait for Aero to stop making changes to their installer, fix the script
 
 ### Eventually:
 
@@ -94,9 +92,9 @@ internet games fixing, add new declaration with 7 entries: 3 .exe, 4 .dll (proba
 ---
 
 Personal note:
-Wine developers, and those in general focused on its betterment, seem to love older windows versions before Vista (for exmple the inbuilt minesweeper, nd general visuals), but I am nostalgic for the windows 7 era aero style, where the inbuilt games got modern enough to not seem "vintage" but before the hellscape that is Microsoft Solitaire Collection.
+Wine developers, and those in general focused on its betterment, seem to love older windows versions before Vista (for example the inbuilt minesweeper, and general visuals), but I am nostalgic for the windows 7 era aero style, where the inbuilt games got modern enough to not seem "vintage" but before the hell-scape that is Microsoft Solitaire Collection.
 
-Shoutout to the one [useful forum post](https://forum.winehq.org/viewtopic.php?t=37417) that gave me the begginings of solving the ui issues, since Wine cannot handle MUI files.
+Shoutout to the one [useful forum post](https://forum.winehq.org/viewtopic.php?t=37417) that gave me the beginnings of solving the ui issues, since Wine cannot handle MUI files.
 
 I am using the images from another (archived) [github guide](https://web.archive.org/web/20220914142532/https://gist.github.com/eladkarako/0c23ce1157b4c6175817c78a7adb577f), since they are very nicely edited.
 > [!WARNING]
